@@ -1,4 +1,4 @@
-class Operation():
+class Operation:
     """Operations form the various steps of a job for the JSSP"""
     def __init__(self, job, step, duration, machine):
         self.job=job
