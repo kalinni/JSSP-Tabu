@@ -1,5 +1,32 @@
 from operation import Operation
 
+def separate_instances(file,directory):
+	'''
+	This function simply separates the instances found in jobshop1.txt into extra files 
+	on which the parse_instance function can then be called.
+
+	'''
+	with open(file,encoding="utf8") as file:
+		first_instance_found = False
+		file_created = False
+		for line in file:
+			if first_instance_found:
+				content = line.split()
+				if len(content) > 0 and content[0] == 'instance':
+					try:
+						if file_created: instance.close()
+						instance = open(directory + content[1] + ".txt", "x")
+						print(directory + content[1] + ".txt was created")
+						file_created = True
+					except:
+						print("File %s.txt already exists." % (content[1]))
+						file_created = False
+				if file_created: instance.write(line)
+			else:
+				if line.find(' +++'): first_instance_found = True
+
+
+
 def parse_instance(file):
 	''' 
 	This function reads in given instances of the JSSP
