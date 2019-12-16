@@ -1,13 +1,15 @@
 import sys
 from operation import Operation
-
-jobs, steps, machines = 5, 4, 5 #Anzahl Jobs, Steps pro Job, Maschinen in Probleminstanz
+import instanceparser
 
 #diese Funktion erhält eine Liste der Steps auf den Maschinen
 #und erzeugt eine optimale Schedule für diese Reihenfolge
 def realizePlan (plan):
+	#Anzahl Jobs, Steps pro Job, Maschinen in Probleminstanz
+	jobs, steps, machines = plan['jobs'], plan['steps'], plan['machines']
+
 	#enabled tracked, ab welchem Zeitpunkt ein Step erlaubt ist
-	enabled = [[0 if j == 0 else sys.maxsize for j in range(steps)] for i in range(jobs)]
+	enabled = [[0 if j == 0 else -1 for j in range(steps)] for i in range(jobs)]
 
 	#schedule enthält für die Maschinen je eine Liste von 3-Tupeln (Step, Startzeit, Endzeit)
 	schedule = [ [] for m in range(machines) ]
@@ -22,10 +24,12 @@ def realizePlan (plan):
 			if machinePlan:
 				op = machinePlan[0]
 				j, s = op.job, op.step
-				if enabled[j][s] <= schedule[m][-1][2]:
+				if enabled[j][s] != -1:
 					blocked = False
-					schedule[m].append( ( machinePlan.pop(), schedule[m][-1][2], schedule[m][-1][2]+op.duration ) )
-					enabled[j][s+1] = schedule[m][-1][2] #dies ist die Endzeit des neu einsortierten op
+					start = max(schedule[m][-1][2], enabled[j][s])
+					finish = start + op.duration
+					schedule[m].append( ( machinePlan.pop(), start, finish ) )
+					enabled[j][s+1] = finish #der nächste Step wird zum Ende des vorherigen enabled
 	finished = True    #finished ist True wenn alle steps einsortiert wurden
 	for m in plan:
 		finished = finished and (not m)
