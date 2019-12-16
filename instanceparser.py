@@ -48,14 +48,14 @@ def parse_instance(file):
 				content = line.split()
 				if len(content) == 2:
 					plan['jobs'] = int(content[0])
-					plan['steps'] = int(content[1])
+					plan['machines'] = int(content[1])
 					job = -1
 				if len(content) > 2:
+					if 'steps' not in plan: plan['steps'] = int(len(content)/2)
 					job += 1
 					for i in range(0,len(content),2):
 						if int(content[i]) not in plan: plan[int(content[i])]=[]
 						plan[int(content[i])].append(Operation(job, int(i/2), int(content[i+1]), int(content[i])))
 			except:
 				pass
-	plan['machines'] = len(plan)-2
 	return plan
