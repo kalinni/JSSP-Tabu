@@ -1,7 +1,7 @@
 import sys
 from os import path
 from instanceparser import parse_instance
-from realizePlan import realizePlan
+from realize_plan import realize_plan
 
 def main():
 	# Decide, on which instance to test our code
@@ -15,17 +15,17 @@ def main():
 		# default if no argument is passed
 		instance = 'instances/abz5.txt'
 
-	# Run te code we have so far
+	# Run the code we have so far
 	plan = parse_instance(instance)
-	schedule = realizePlan(plan)
+	schedule = realize_plan(plan)
 
 	# Output to check our results
-	if not schedule[0]: 
+	if schedule[1] < 0: 
 		print("Couldn't schedule all jobs with this plan")
 	else:
-		for m in range(len(schedule[1])):
+		for m in range(len(schedule[0])):
 			print("Machine %s:" % m)
-			for op in schedule[1][m]:
+			for op in schedule[0][m]:
 				if op[0].machine != m: 
 					print("Job %s is on the wrong machine." % op[0])
 				if op[2] - op[1] != op[0].duration:
