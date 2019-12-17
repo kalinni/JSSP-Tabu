@@ -32,7 +32,8 @@ def realizePlan (plan):
 						start = 0
 					finish = start + op.duration
 					schedule[m].append( ( machinePlan.pop(), start, finish ) )
-					enabled[j][s+1] = finish #der nächste Step wird zum Ende des vorherigen enabled
+					if s < steps -1:
+						enabled[j][s+1] = finish #der nächste Step wird zum Ende des vorherigen enabled
 	finished = True    #finished ist True wenn alle steps einsortiert wurden
 	for m in plan:
 		finished = finished and (not m)
