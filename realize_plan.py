@@ -14,27 +14,29 @@ def realize_plan (plan):
 	#schedule enthält für die Maschinen je eine Liste von 3-Tupeln (Step, Startzeit, Endzeit)
 	schedule = [ [] for m in range(machines) ]
 
+	#next zeigt für jede Maschine das nächste Element des Plans an
+	next = [0 for m in range(machines)]
+
 	#blocked zeigt an, ob es keine steps mehr gab, die einsortiert werden konnten 
 	#(tritt auch ein, wenn alle steps einsortiert wurden)
 	blocked = False
 	while not blocked:
 		blocked = True
 		for m in range(machines):   #teste für alle Maschinen, ob der nächste step einsortiert werden kann
-			machinePlan = plan[m]
-			if plan[m]:
-				op = plan[m][0]
-				j, s = plan[m][0].job, plan[m][0].step
+			if next[m] < steps:
+				j, s = plan[m][next[m]].job, plan[m][next[m]].step
 				if enabled[j][s] != -1:
 					blocked = False
 					if schedule[m]:
 						start = max(schedule[m][-1][2], enabled[j][s])
 					else:
 						start = enabled[j][s]
-					finish = start + plan[m][0].duration
-					schedule[m].append( ( plan[m].pop(), start, finish ) )
+					finish = start + plan[m][next[m]].duration
+					schedule[m].append( ( plan[m][next[m]], start, finish ) )
+					next[m] += 1
 					if s < steps -1:
 						enabled[j][s+1] = finish #der nächste Step wird zum Ende des vorherigen enabled
 	finished = True    #finished ist True wenn alle steps einsortiert wurden
-	for m in plan:
-		finished = finished and (not m)
+	for m in range(machines):
+		finished = finished and (next[m] >= steps)
 	return [finished, schedule, enabled]
