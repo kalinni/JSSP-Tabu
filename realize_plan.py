@@ -4,7 +4,7 @@ import instanceparser
 
 #diese Funktion erhält eine Liste der Steps auf den Maschinen
 #und erzeugt eine optimale Schedule für diese Reihenfolge
-def realizePlan (plan):
+def realize_plan (plan):
 	#Anzahl Jobs, Steps pro Job, Maschinen in Probleminstanz
 	jobs, steps, machines = plan['jobs'], plan['steps'], plan['machines']
 
