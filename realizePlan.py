@@ -26,7 +26,10 @@ def realizePlan (plan):
 				j, s = op.job, op.step
 				if enabled[j][s] != -1:
 					blocked = False
-					start = max(schedule[m][-1][2], enabled[j][s])
+					if schedule[m]:
+						start = max(schedule[m][-1][2], enabled[j][s])
+					else:
+						start = 0
 					finish = start + op.duration
 					schedule[m].append( ( machinePlan.pop(), start, finish ) )
 					enabled[j][s+1] = finish #der nächste Step wird zum Ende des vorherigen enabled
