@@ -23,7 +23,7 @@ def realize_plan (plan):
 	while not blocked:
 		blocked = True
 		for m in range(machines):   #teste für alle Maschinen, ob der nächste step einsortiert werden kann
-			if next[m] < steps:
+			if next[m] < len(plan[m]):
 				j, s = plan[m][next[m]].job, plan[m][next[m]].step
 				if enabled[j][s] != -1:
 					blocked = False
@@ -39,7 +39,7 @@ def realize_plan (plan):
 	#finished testet ob alle steps einsortiert wurden (dh ob die schedule zulässig ist)
 	finished = True    
 	for m in range(machines):
-		finished = finished and (next[m] >= steps)
+		finished = finished and (next[m] >= len(plan[m]))
 
 	#time ermittelt die benötigte Zeit falls die schedule zulässig ist
 	time =-1
