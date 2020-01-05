@@ -41,13 +41,13 @@ def main():
 	for m in range(machines):
 		for i in range(len(plan[m])):
 			neighbour = generate_neighbour(plan, m, i)
-			sched = realize_plan(neighbour)
-			if sched[1] > 0:
-				if (best_value < 0) or (sched[1] < best_value):
-					best_value = sched[1]
-					new_schedule = sched[0]
-					swap = (m, i)
-	print(swap)
+			if neighbour != False:
+				sched = realize_plan(neighbour)
+				if sched[1] > 0:
+					if (best_value < 0) or (sched[1] < best_value):
+						best_value = sched[1]
+						new_schedule = sched[0]
+						swap = (m, i)
 
 
 
