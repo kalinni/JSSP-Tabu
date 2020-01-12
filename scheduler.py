@@ -4,6 +4,9 @@ from instanceparser import parse_instance
 from realize_plan import realize_plan
 from neighbourhood import generate_neighbour
 
+RECENCY_MEMORY = 5
+NO_IMPROVE_MAX = 20
+
 def print_schedule(schedule):
 	if schedule[1] < 0: 
 		print("Couldn't schedule all jobs with this plan")
@@ -30,25 +33,55 @@ def main():
 		# default if no argument is passed
 		instance = 'instances/simple.txt'
 
-	# Get a plan from the chosen instance and turn it into a schedule
+	# Get a plan from the chosen instance and turn it into the initial schedule
 	### Note: Will always give a valid schedule, due to how we get the plan from the instance
 	plan = parse_instance(instance) # plan is a dict
 	schedule = realize_plan(plan) # schedule is a tuple, first entry is list of lists of triples, the actual schedule, second entry is the time
 
 	machines = plan['machines']
-	jobs = plan['jobs']
 
-	# Check neighbourhood
+	# Start Tabu Search
 	best_schedule = schedule
-	for m in range(machines):
-		for i in range(len(plan[m])):
-			neighbour = generate_neighbour(plan, m, i)
-			if neighbour != False:
-				sched = realize_plan(neighbour)
-				if sched[1] > 0:
-					if (sched[1] < best_schedule[1]):
-						best_schedule = sched
-						swap = (m, i)
+	no_improve = 0
+	tabus = dict()
+
+	while no_improve < NO_IMPROVE_MAX:
+		# Find best neighbour for current plan
+		best_time = -1
+		for m in range(machines):
+			for i in range(len(plan[m])):
+				if (m,i) in tabus: continue
+				neighbour = generate_neighbour(plan, m, i)
+				if neighbour != False:
+					sched = realize_plan(neighbour)
+					if sched[1] > 0:
+						if (best_time == -1) or (sched[1] < best_time):
+							best_neighbour = sched
+							best_time = sched[1]
+							swap = (m, i)
+		if best_time == -1:
+			print("No valid neighbour found.")
+			break
+		print("Swapped: %s -- Current schedule's time: %s" % (swap,best_time))
+
+		# Update the best schedule and no-improvement-counter
+		if best_time >= best_schedule[1]:
+			no_improve +=1
+		else:
+			best_schedule = best_neighbour
+			no_improve = 0
+
+		# Update tabus and add new tabu
+		for tabu in list(tabus):
+			if tabus[tabu] > 1:	
+				tabus[tabu] -= 1 
+			else:
+				del tabus[tabu]
+		tabus[swap] = RECENCY_MEMORY
+
+		# Make the plan giving the best neighbour the starting point for the next iteration
+		plan = generate_neighbour(plan, swap[0], swap[1])
+
 	# Output
 	print_schedule(best_schedule)
 
