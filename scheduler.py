@@ -28,7 +28,7 @@ def print_schedule(schedule, plan):
 
 	for t in timetable:
 		for i in range(len(t)):
-			if i<=len(t) - 1:
+			if i <= len(t) - 2:
 				if t[i][1] > t[i+1][0]:
 					print("Steps from the same Job overlap: %s" % t)
 
