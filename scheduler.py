@@ -21,17 +21,7 @@ def print_schedule(schedule):
 					print("Job %s takes a wrong amount of time, it takes %s" % (op[0], op[2]-op[1]))
 				print('--- %s.%s start %s duration %s' % (op[0].job, op[0].step, op[1], op[0].duration))
 
-def main():
-	# Decide, on which instance to test our code
-	if len(sys.argv) > 1:
-		# you may run the script with a path to an instance as the argument
-		if path.exists(sys.argv[1]):
-			instance = sys.argv[1]
-		else: 
-			raise SystemExit("There is no instance at %s" % sys.argv[1])
-	else: 
-		# default if no argument is passed
-		instance = 'instances/simple.txt'
+def search_schedule(instance):
 
 	# Get a plan from the chosen instance and turn it into the initial schedule
 	### Note: Will always give a valid schedule, due to how we get the plan from the instance
@@ -82,9 +72,25 @@ def main():
 		# Make the plan giving the best neighbour the starting point for the next iteration
 		plan = generate_neighbour(plan, swap[0], swap[1])
 
+	return best_schedule
+	
+
+def main():
+	# Decide, on which instance to test our code
+	if len(sys.argv) > 1:
+		# you may run the script with a path to an instance as the argument
+		if path.exists(sys.argv[1]):
+			instance = sys.argv[1]
+		else: 
+			raise SystemExit("There is no instance at %s" % sys.argv[1])
+	else: 
+		# default if no argument is passed
+		instance = 'instances/simple.txt'
+
+	# Run the tabu search
+	best_schedule = search_schedule(instance)
+
 	# Output
 	print_schedule(best_schedule)
-
-
 
 if __name__ == "__main__": main()
