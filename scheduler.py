@@ -34,7 +34,6 @@ def print_schedule(schedule, plan):
 
 
 
-
 def random_instance(plan):	#constructs a random schedule by repeatedly picking the next step to be sorted
 	next_step = [0 for i in range(plan['jobs'])]
 	new_plan = dict()
@@ -80,9 +79,13 @@ def search_schedule(plan):
 	while no_improve < NO_IMPROVE_MAX:
 		# Find best neighbour for current plan
 		best_time = -1
+		aspiration_check = []
 		for m in range(machines):
 			for i in range(len(plan[m])):
-				if (m,i) in tabus: continue
+				if (plan[m][i-1],plan[m][i]) in tabus: 
+					print("Swapping %s with %s is tabu!" % (plan[m][i-1],plan[m][i]))
+					aspiration_check.append((m,i))
+					continue
 				neighbour = generate_neighbour(plan, m, i)
 				if neighbour != False:
 					sched = realize_plan(neighbour)
@@ -95,7 +98,7 @@ def search_schedule(plan):
 		# Aspiration Search: If there is tabu neighbour with time better than current optimum 
 		# 						and best found swap, choose tabu swap instead
 		threshold = min(best_time, best_schedule[1]) if best_time > 0 else best_schedule[1]
-		for (m, i) in tabus:
+		for (m,i) in aspiration_check:
 			neighbour = generate_neighbour(plan, m, i)
 			if neighbour != False:
 				sched = realize_plan(neighbour)
@@ -105,12 +108,14 @@ def search_schedule(plan):
 						best_time = sched[1]
 						threshold = best_time
 						swap = (m, i)
+						print("Swapping %s with %s is tabu but great! Gives %s" % (plan[m][i-1],plan[m][i],best_time))
+
 
 		if best_time == -1:
 			print("No valid neighbour found.")
 			break
 		
-		print("Swapped: %s -- Current schedule's time: %s" % (swap,best_time))
+		print("Swapped: %s with %s -- Current schedule's time: %s" % (plan[swap[0]][swap[1]],plan[swap[0]][swap[1] - 1],best_time))
 
 		# Update the best schedule and no-improvement-counter
 		if best_time >= best_schedule[1]:
@@ -125,7 +130,7 @@ def search_schedule(plan):
 				tabus[tabu] -= 1 
 			else:
 				del tabus[tabu]
-		tabus[swap] = RECENCY_MEMORY
+		tabus[(plan[swap[0]][swap[1]],plan[swap[0]][swap[1] - 1])] = RECENCY_MEMORY
 
 		# Make the plan giving the best neighbour the starting point for the next iteration
 		plan = generate_neighbour(plan, swap[0], swap[1])
