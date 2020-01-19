@@ -91,13 +91,10 @@ def search_schedule(plan):
 							best_neighbour = sched
 							best_time = sched[1]
 							swap = (m, i)
-		if best_time == -1:
-			print("No valid neighbour found.")
-			break
 		
 		# Aspiration Search: If there is tabu neighbour with time better than current optimum 
 		# 						and best found swap, choose tabu swap instead
-		threshold = min(best_time, best_schedule[1])
+		threshold = min(best_time, best_schedule[1]) if best_time > 0 else best_schedule[1]
 		for (m, i) in tabus:
 			neighbour = generate_neighbour(plan, m, i)
 			if neighbour != False:
@@ -108,6 +105,10 @@ def search_schedule(plan):
 						best_time = sched[1]
 						threshold = best_time
 						swap = (m, i)
+
+		if best_time == -1:
+			print("No valid neighbour found.")
+			break
 		
 		print("Swapped: %s -- Current schedule's time: %s" % (swap,best_time))
 
@@ -152,8 +153,10 @@ def main():
 	optimum = -1
 	for i in range(ITERATIONS):
 		best_schedule = search_schedule(plan)
-		print("++++++++++++++++++++")
+		print("")
 		print("Best Schedule in Run: %s" % best_schedule[1])
+		print("++++++++++++++++++++")
+		print("")
 		if optimum < 0:
 			optimum = best_schedule[1]
 			optimum_schedule = best_schedule
