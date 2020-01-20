@@ -5,11 +5,11 @@ from realize_plan import realize_plan
 from neighbourhood import generate_neighbour
 import random
 
-RECENCY_MEMORY = 5
-FREQUENCY_MEMORY = 50
-FREQUENCY_INFLUENCE = 5 # Should depend on estimated schedule time and Frequency_Memory maybe?
-NO_IMPROVE_MAX = 20
-TRIES = 5
+RECENCY_MEMORY = 5 # How long are specific swaps tabu?
+FREQUENCY_MEMORY = 50 # For how many steps do we remember our moves
+FREQUENCY_INFLUENCE = 5 # Weight for the influence of the frequency --- Should depend on estimated schedule time and Frequency_Memory maybe?
+NO_IMPROVE_MAX = 20 # How many iterations without improvement before we stop?
+TRIES = 5 # From how many different starting schedules do we run the tabu search?
 
 
 def print_schedule(schedule, plan):
@@ -130,8 +130,12 @@ def search_schedule(plan):
 		if best_time == -1:
 			print("No valid neighbour found.")
 			break
+
+		# Get Operations swapped
+		op1 = plan[swap[0]][swap[1]]
+		op2 = plan[swap[0]][swap[1] - 1]
 		
-		print("Swapped: %s with %s -- Current schedule's time: %s" % (plan[swap[0]][swap[1]],plan[swap[0]][swap[1] - 1],best_neighbour[1]))
+		print("Swapped: %s with %s -- Current schedule's time: %s" % (op1,op2,best_neighbour[1]))
 
 		# Update the best schedule and no-improvement-counter
 		if best_neighbour[1] >= best_schedule[1]:
@@ -146,7 +150,7 @@ def search_schedule(plan):
 				tabus[tabu] -= 1 
 			else:
 				del tabus[tabu]
-		tabus[(plan[swap[0]][swap[1]],plan[swap[0]][swap[1] - 1])] = RECENCY_MEMORY
+		tabus[(op1,op2)] = RECENCY_MEMORY
 
 		# Update frequency memory
 		for operation in list(frequencies):
@@ -154,15 +158,15 @@ def search_schedule(plan):
 				frequencies[operation].pop(0)
 				if len(frequencies[operation]) == 0: del frequencies[operation]
 
-		if plan[swap[0]][swap[1]] in frequencies:
-			frequencies[plan[swap[0]][swap[1]]].append(iteration)
+		if op1 in frequencies:
+			frequencies[op1].append(iteration)
 		else:
-			frequencies[plan[swap[0]][swap[1]]] = [iteration]
+			frequencies[op1] = [iteration]
 
-		if plan[swap[0]][swap[1]-1] in frequencies:
-			frequencies[plan[swap[0]][swap[1]-1]].append(iteration) 
+		if op2 in frequencies:
+			frequencies[op2].append(iteration) 
 		else:
-			frequencies[plan[swap[0]][swap[1]-1]] = [iteration]
+			frequencies[op2] = [iteration]
 
 		iteration += 1
 
