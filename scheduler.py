@@ -6,8 +6,10 @@ from neighbourhood import generate_neighbour
 import random
 
 RECENCY_MEMORY = 5
+FREQUENCY_MEMORY = 50
+FREQUENCY_INFLUENCE = 5 # Should depend on estimated schedule time and Frequency_Memory maybe?
 NO_IMPROVE_MAX = 20
-ITERATIONS = 5
+TRIES = 5
 
 
 def print_schedule(schedule, plan):
@@ -31,7 +33,6 @@ def print_schedule(schedule, plan):
 			if i <= len(t) - 2:
 				if t[i][1] > t[i+1][0]:
 					print("Steps from the same Job overlap: %s" % t)
-
 
 
 
@@ -76,43 +77,64 @@ def search_schedule(plan):
 	best_schedule = schedule
 	no_improve = 0
 	tabus = dict()
+	frequencies = dict()
+	iteration=0
 
 	while no_improve < NO_IMPROVE_MAX:
 		# Find best neighbour for current plan
 		best_time = -1
+		aspiration_check = []
 		for m in range(machines):
 			for i in range(len(plan[m])):
-				if (m,i) in tabus: continue
+				if (plan[m][i-1],plan[m][i]) in tabus: 
+					print("Swapping %s with %s is tabu!" % (plan[m][i-1],plan[m][i]))
+					aspiration_check.append((m,i))
+					continue
 				neighbour = generate_neighbour(plan, m, i)
 				if neighbour != False:
 					sched = realize_plan(neighbour)
 					if sched[1] > 0:
-						if (best_time == -1) or (sched[1] < best_time):
+						penalty = 0
+						if plan[m][i-1] in frequencies:
+							penalty += len(frequencies[plan[m][i-1]])
+						if plan[m][i] in frequencies:
+							penalty += len(frequencies[plan[m][i]])
+						penalty *= FREQUENCY_INFLUENCE
+						if (best_time == -1) or (sched[1] + penalty < best_time):
 							best_neighbour = sched
-							best_time = sched[1]
+							best_time = sched[1] + penalty
 							swap = (m, i)
-		if best_time == -1:
-			print("No valid neighbour found.")
-			break
 		
 		# Aspiration Search: If there is tabu neighbour with time better than current optimum 
 		# 						and best found swap, choose tabu swap instead
-		threshold = min(best_time, best_schedule[1])
-		for (m, i) in tabus:
+		threshold = min(best_time, best_schedule[1]) if best_time > 0 else best_schedule[1]
+		for (m,i) in aspiration_check:
 			neighbour = generate_neighbour(plan, m, i)
 			if neighbour != False:
 				sched = realize_plan(neighbour)
 				if sched[1] > 0:
-					if (sched[1] < threshold):
+					penalty = 0
+					if plan[m][i-1] in frequencies:
+						penalty += len(frequencies[plan[m][i-1]])
+					if plan[m][i] in frequencies:
+						penalty += len(frequencies[plan[m][i]])
+					penalty *= FREQUENCY_INFLUENCE
+					if (sched[1] + penalty < threshold):
 						best_neighbour = sched
-						best_time = sched[1]
+						best_time = sched[1] + penalty
 						threshold = best_time
 						swap = (m, i)
+						print("Swapping %s with %s is tabu but great! Gives %s" % (plan[m][i-1],plan[m][i],best_neighbour[1]))
+
+
+		if best_time == -1:
+			print("No valid neighbour found.")
+			break
 		
-		print("Swapped: %s -- Current schedule's time: %s" % (swap,best_time))
+		print("Swapped: %s with %s -- Current schedule's time: %s" % (plan[swap[0]][swap[1]],plan[swap[0]][swap[1] - 1],best_neighbour[1]))
 
 		# Update the best schedule and no-improvement-counter
-		if best_time >= best_schedule[1]:
+		if best_neighbour[1] >= best_schedule[1]:
 			no_improve +=1
 		else:
 			best_schedule = best_neighbour
@@ -124,7 +146,25 @@ def search_schedule(plan):
 				tabus[tabu] -= 1 
 			else:
 				del tabus[tabu]
-		tabus[swap] = RECENCY_MEMORY
+		tabus[(plan[swap[0]][swap[1]],plan[swap[0]][swap[1] - 1])] = RECENCY_MEMORY
+
+		# Update frequency memory
+		for operation in list(frequencies):
+			if frequencies[operation][0] == (iteration - FREQUENCY_MEMORY): 
+				frequencies[operation].pop(0)
+				if len(frequencies[operation]) == 0: del frequencies[operation]
+
+		if plan[swap[0]][swap[1]] in frequencies:
+			frequencies[plan[swap[0]][swap[1]]].append(iteration)
+		else:
+			frequencies[plan[swap[0]][swap[1]]] = [iteration]
+
+		if plan[swap[0]][swap[1]-1] in frequencies:
+			frequencies[plan[swap[0]][swap[1]-1]].append(iteration) 
+		else:
+			frequencies[plan[swap[0]][swap[1]-1]] = [iteration]
+
+		iteration += 1
 
 		# Make the plan giving the best neighbour the starting point for the next iteration
 		plan = generate_neighbour(plan, swap[0], swap[1])
@@ -150,10 +190,12 @@ def main():
 
 	# Run the tabu search
 	optimum = -1
-	for i in range(ITERATIONS):
+	for i in range(TRIES):
 		best_schedule = search_schedule(plan)
-		print("++++++++++++++++++++")
+		print("")
 		print("Best Schedule in Run: %s" % best_schedule[1])
+		print("++++++++++++++++++++")
+		print("")
 		if optimum < 0:
 			optimum = best_schedule[1]
 			optimum_schedule = best_schedule
