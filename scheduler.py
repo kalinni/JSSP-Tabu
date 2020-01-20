@@ -1,15 +1,13 @@
 import sys
 from os import path
+import math
+import random
+import time
+
 from instanceparser import parse_instance
 from realize_plan import realize_plan
 from neighbourhood import generate_neighbour
-import random
-
-RECENCY_MEMORY = 5 # How long are specific swaps tabu?
-FREQUENCY_MEMORY = 50 # For how many steps do we remember our moves
-FREQUENCY_INFLUENCE = 5 # Weight for the influence of the frequency --- Should depend on estimated schedule time and Frequency_Memory maybe?
-NO_IMPROVE_MAX = 20 # How many iterations without improvement before we stop?
-TRIES = 5 # From how many different starting schedules do we run the tabu search?
+import parameters
 
 
 def print_schedule(schedule, plan):
@@ -80,7 +78,7 @@ def search_schedule(plan):
 	frequencies = dict()
 	iteration=0
 
-	while no_improve < NO_IMPROVE_MAX:
+	while no_improve < globals()['no_improvement']:
 		# Find best neighbour for current plan
 		best_time = -1
 		aspiration_check = []
@@ -99,7 +97,7 @@ def search_schedule(plan):
 							penalty += len(frequencies[plan[m][i-1]])
 						if plan[m][i] in frequencies:
 							penalty += len(frequencies[plan[m][i]])
-						penalty *= FREQUENCY_INFLUENCE
+						penalty *= globals()['frequency_influence']
 						if (best_time == -1) or (sched[1] + penalty < best_time):
 							best_neighbour = sched
 							best_time = sched[1] + penalty
@@ -118,7 +116,7 @@ def search_schedule(plan):
 						penalty += len(frequencies[plan[m][i-1]])
 					if plan[m][i] in frequencies:
 						penalty += len(frequencies[plan[m][i]])
-					penalty *= FREQUENCY_INFLUENCE
+					penalty *= globals()['frequency_influence']
 					if (sched[1] + penalty < threshold):
 						best_neighbour = sched
 						best_time = sched[1] + penalty
@@ -150,11 +148,11 @@ def search_schedule(plan):
 				tabus[tabu] -= 1 
 			else:
 				del tabus[tabu]
-		tabus[(op1,op2)] = RECENCY_MEMORY
+		tabus[(op1,op2)] = globals()['recency_memory']
 
 		# Update frequency memory
 		for operation in list(frequencies):
-			if frequencies[operation][0] == (iteration - FREQUENCY_MEMORY): 
+			if frequencies[operation][0] == (iteration - globals()['frequency_memory']): 
 				frequencies[operation].pop(0)
 				if len(frequencies[operation]) == 0: del frequencies[operation]
 
@@ -177,6 +175,13 @@ def search_schedule(plan):
 	
 
 def main():
+	start_time = time.time()
+	#set global values
+	globals()['recency_memory'] = parameters.RECENCY_MEMORY
+	globals()['frequency_memory'] = parameters.FREQUENCY_MEMORY
+	globals()['no_improvement'] = parameters.NO_IMPROVE_MAX
+	globals()['tries'] = parameters.TRIES
+
 	# Decide, on which instance to test our code
 	if len(sys.argv) > 1:
 		# you may run the script with a path to an instance as the argument
@@ -192,9 +197,12 @@ def main():
 	### Note: Will always give a valid schedule, due to how we get the plan from the instance
 	plan = parse_instance(instance) # plan is a dict
 
+	set_dynamic_parameters(plan)
+
 	# Run the tabu search
 	optimum = -1
-	for i in range(TRIES):
+	for i in range(globals()['tries']):
+		plan = random_instance(plan)
 		best_schedule = search_schedule(plan)
 		print("")
 		print("Best Schedule in Run: %s" % best_schedule[1])
@@ -207,9 +215,20 @@ def main():
 			if best_schedule[1] < optimum:
 				optimum = best_schedule[1]
 				optimum_schedule = best_schedule
-		plan = random_instance(plan)
 
 	# Output
+	execution_time = round(time.time() - start_time)
+	print("Program takes %s minutes and %s seconds to run" \
+		% (round(execution_time / 60), execution_time % 60) )
 	print_schedule(optimum_schedule, plan)
+
+
+def set_dynamic_parameters(plan):
+	jobs = plan['jobs']
+	steps = plan['steps']
+	weight = 0.25 * math.sqrt(jobs * steps)
+	globals()['frequency_influence'] = weight
+	print("Weight of frequent move is %s" % round(weight))
+	
 
 if __name__ == "__main__": main()
