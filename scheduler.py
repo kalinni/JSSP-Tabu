@@ -1,14 +1,16 @@
 import sys
 from os import path
 import math
-import random
 import time
 
 from instanceparser import parse_instance
 from realize_plan import realize_plan
 from neighbourhood import generate_neighbour
+from planner import random_plan, fixed_plan
 import parameters
 
+MODE = 'Experimental'	# MODE variable shows whether the program is supposed to measure performance 
+						# on a preset list of plans ('Experimental') or supposed to run for arbitrary plans ('Active')
 
 def print_schedule(schedule, plan):
 	timetable = [ [ 0 for s in range(plan['steps']) ] for j in range(plan['jobs']) ]
@@ -34,35 +36,7 @@ def print_schedule(schedule, plan):
 
 
 
-def random_instance(plan):	#constructs a random schedule by repeatedly picking the next step to be sorted
-	next_step = [0 for i in range(plan['jobs'])]
-	new_plan = dict()
 
-	new_plan['machines'], new_plan['jobs'], new_plan['steps'] = plan['machines'], plan['jobs'], plan['steps']
-	for i in range(new_plan['machines']):
-		new_plan[i] = []
-
-	finished = True
-	for n in next_step:
-		finished = finished and not (n < new_plan['steps'])
-	while not finished:
-		step = False
-		options = [ i for i in range(new_plan['jobs']) if next_step[i] < new_plan['steps'] ]	#Diese Konstruktion nimmt an, dass alle Jobs gleich viele Steps haben
-		job = random.choice(options)
-		for m in range(plan['machines']):
-			i = 0
-			while i < len(plan[m]) and not step:
-				if plan[m][i].job == job and plan[m][i].step == next_step[job] and not step:
-					step = plan[m][i]
-					new_plan[m].append(step)
-					next_step[job] += 1
-					step = True
-				i += 1
-		finished = True
-		for n in next_step:
-			finished = finished and not (n < new_plan['steps'])
-	
-	return new_plan
 
 
 
@@ -185,24 +159,30 @@ def main():
 	# Decide, on which instance to test our code
 	if len(sys.argv) > 1:
 		# you may run the script with a path to an instance as the argument
-		if path.exists(sys.argv[1]):
-			instance = sys.argv[1]
-		else: 
-			raise SystemExit("There is no instance at %s" % sys.argv[1])
+		instance = sys.argv[1]
+		instance_path = 'instances/' + instance + '.txt'
+		if not path.exists(instance_path):
+			raise SystemExit("There is no instance at %s" % instance_path)
 	else: 
 		# default if no argument is passed
-		instance = 'instances/simple.txt'
+		instance = 'simple'
+		instance_path = 'instances/' + instance + '.txt'
 
 	# Make a plan from the chosen instance and turn it into the initial schedule
 	### Note: Will always give a valid schedule, due to how we get the plan from the instance
-	plan = parse_instance(instance) # plan is a dict
+	plan = parse_instance(instance_path) # plan is a dict
 
 	set_dynamic_parameters(plan)
 
 	# Run the tabu search
 	optimum = -1
 	for i in range(globals()['tries']):
-		plan = random_instance(plan)
+		if MODE == 'Active':
+			plan = random_plan(plan)
+		if MODE == 'Experimental':
+			plan = fixed_plan(plan, i, instance)
+		if not MODE == 'Active' and not MODE == 'Experimental':
+			raise SystemExit("The MODE variable is set to an undefined value!")
 		best_schedule = search_schedule(plan)
 		print("")
 		print("Best Schedule in Run: %s" % best_schedule[1])
