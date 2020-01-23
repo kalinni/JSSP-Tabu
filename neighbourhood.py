@@ -1,6 +1,5 @@
 from operation import Operation
 import copy
-import instanceparser
 
 #generates one neighbour by swapping indicated step in plan one position forward
 #returns False if swap fails

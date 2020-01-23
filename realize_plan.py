@@ -12,10 +12,10 @@ def realize_plan (plan):
 	enabled = [[0 if s == 0 else -1 for s in range(steps)] for j in range(jobs)]
 
 	#schedule enthält für die Maschinen je eine Liste von 3-Tupeln (Step, Startzeit, Endzeit)
-	schedule = [ [] for m in range(machines) ]
+	schedule = { m:[] for m in range(machines) }
 
 	#next zeigt für jede Maschine das nächste Element des Plans an
-	next = [0 for m in range(machines)]
+	next = {m:0 for m in range(machines)}
 
 	#blocked zeigt an, ob es keine steps mehr gab, die einsortiert werden konnten 
 	#(tritt auch ein, wenn alle steps einsortiert wurden)
@@ -46,7 +46,8 @@ def realize_plan (plan):
 	if finished:
 		for m in range(machines):
 			time = max(time, schedule[m][-1][2])
+	schedule['time']=time
 
 	#Ausgabe: schedule -> Liste von 3-Tupeln (Step, Startzeit, Endzeit) je Maschine
 	#		  time   ->   benötigte Zeit der Schedule (-1 falls die Schedule ungütig ist)
-	return [schedule, time]
+	return schedule
