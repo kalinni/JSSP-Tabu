@@ -6,7 +6,7 @@ import copy
 
 from instanceparser import parse_instance
 from realize_plan import realize_plan
-from neighbourhood import generate_neighbour
+from neighbourhood import generate_complex_neighbour
 from planner import random_plan, fixed_plan
 import parameters
 
@@ -49,41 +49,54 @@ def search_schedule(plan):
 	frequencies = dict()
 	iteration=0
 
+
+	# Those two simply serve to see, how many valid and invalid neighbours we check
+	valid = 0
+	invalid = 0
+
 	while no_improve < globals()['no_improvement']:
 		# Find best neighbour for current plan
 		best_time = -1
 		aspiration_check = []
 		for m in range(machines):
-			for i in range(len(plan[m])):
-				neighbour = generate_neighbour(plan, m, i)
-				if neighbour != False:
-					sched = realize_plan(neighbour)
-					if sched['time'] > 0:
-						penalty = 0
-						if plan[m][i-1] in frequencies:
-							penalty += len(frequencies[plan[m][i-1]])
-						if plan[m][i] in frequencies:
-							penalty += len(frequencies[plan[m][i]])
-						penalty *= globals()['frequency_influence']
-						if (best_time == -1) or (sched['time'] + penalty < best_time):
-							if (plan[m][i-1],plan[m][i]) in tabus: 
-								aspiration_check.append((copy.deepcopy(sched),penalty,m,i))
-								print("Swapping %s with %s is tabu!" % (plan[m][i-1],plan[m][i]))
-							else:
-								best_neighbour = sched
-								best_time = sched['time'] + penalty
-								swap = (m, i)
+			for i in range(len(plan[m])-1):
+######### Switch between swapping only neighbours and swapping any operations by commenting eighter the next two or the third line.
+				for k in range(1):
+					j = i+1
+#				for j in range(i+1,len(plan[m])):
+					neighbour = generate_complex_neighbour(plan, m, i, j)
+					if neighbour != False:
+						sched = realize_plan(neighbour)
+						if sched['time'] > 0:
+							valid += 1
+							penalty = 0
+							if plan[m][j] in frequencies:
+								penalty += len(frequencies[plan[m][j]])
+							if plan[m][i] in frequencies:
+								penalty += len(frequencies[plan[m][i]])
+							penalty *= globals()['frequency_influence']
+							if (best_time == -1) or (sched['time'] + penalty < best_time):
+								if (plan[m][j],plan[m][i]) in tabus: 
+									aspiration_check.append((copy.deepcopy(sched),penalty,m,i,j))
+									print("Swapping %s with %s is tabu!" % (plan[m][j],plan[m][i]))
+								else:
+									best_neighbour = sched
+									best_time = sched['time'] + penalty
+									swap = (m, i, j)
+						else: 
+							invalid += 1
+
 		
 		# Aspiration Search: If there is tabu neighbour with time better than current optimum 
 		# 						and best found swap, choose tabu swap instead
 		threshold = min(best_time, best_schedule['time']) if best_time > 0 else best_schedule['time']
-		for (sched,penalty,m,i) in aspiration_check:
+		for (sched,penalty,m,i,j) in aspiration_check:
 			if (sched['time'] + penalty < threshold):
 				best_neighbour = sched
 				best_time = sched['time'] + penalty
 				threshold = best_time
-				swap = (m, i)
-				print("Swapping %s with %s is tabu but great! Gives %s" % (plan[m][i-1],plan[m][i],best_neighbour['time']))
+				swap = (m, i, j)
+				print("Swapping %s with %s is tabu but great! Gives %s" % (plan[m][j],plan[m][i],best_neighbour['time']))
 
 
 		if best_time == -1:
@@ -92,7 +105,7 @@ def search_schedule(plan):
 
 		# Get Operations swapped
 		op1 = plan[swap[0]][swap[1]]
-		op2 = plan[swap[0]][swap[1] - 1]
+		op2 = plan[swap[0]][swap[2]]
 		
 		print("Swapped: %s with %s -- Current schedule's time: %s" % (op1,op2,best_neighbour['time']))
 
@@ -126,8 +139,9 @@ def search_schedule(plan):
 		iteration += 1
 
 		# Make the plan giving the best neighbour the starting point for the next iteration
-		plan = generate_neighbour(plan, swap[0], swap[1])
+		plan = generate_complex_neighbour(plan, swap[0], swap[1], swap[2])
 
+	print("valid: %s, invalid: %s" % (valid,invalid))
 	return best_schedule
 	
 
