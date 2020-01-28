@@ -2,27 +2,24 @@ import sys
 from operation import Operation
 import instanceparser
 
-#diese Funktion erhält eine Liste der Steps auf den Maschinen
-#und erzeugt eine optimale Schedule für diese Reihenfolge
+#this function calculates an optimal schedule from the given plan (i.e. order of steps on every machine)
 def realize_plan (plan):
-	#Anzahl Jobs, Steps pro Job, Maschinen in Probleminstanz
+	#store the number of jobs, steps and machines for easier access
 	jobs, steps, machines = plan['jobs'], plan['steps'], plan['machines']
 
-	#enabled tracked, ab welchem Zeitpunkt ein Step erlaubt ist
+	#enabled tracks at which point in time a step is 'enabled' (i.e. its predecessor step has finished)
 	enabled = [[0 if s == 0 else -1 for s in range(steps)] for j in range(jobs)]
 
-	#schedule enthält für die Maschinen je eine Liste von 3-Tupeln (Step, Startzeit, Endzeit)
 	schedule = { m:[] for m in range(machines) }
+	next = {m:0 for m in range(machines)}			# next tracks the next step for every machine
 
-	#next zeigt für jede Maschine das nächste Element des Plans an
-	next = {m:0 for m in range(machines)}
-
-	#blocked zeigt an, ob es keine steps mehr gab, die einsortiert werden konnten 
-	#(tritt auch ein, wenn alle steps einsortiert wurden)
+	# for every machine, check whether the next planned step is already enabled 
+	# if so: insert that step into the schedule
+	# if no step can be inserted: plan is blocking and thus impermissible (deadlock occurred)
 	blocked = False
 	while not blocked:
 		blocked = True
-		for m in range(machines):   #teste für alle Maschinen, ob der nächste step einsortiert werden kann
+		for m in range(machines):
 			if next[m] < len(plan[m]):
 				j, s = plan[m][next[m]].job, plan[m][next[m]].step
 				if enabled[j][s] != -1:
@@ -35,19 +32,20 @@ def realize_plan (plan):
 					schedule[m].append( ( plan[m][next[m]], start, finish ) )
 					next[m] += 1
 					if s < steps -1:
-						enabled[j][s+1] = finish #der nächste Step wird enabled zum Ende des vorherigen 
-	#finished testet ob alle steps einsortiert wurden (dh ob die schedule zulässig ist)
+						enabled[j][s+1] = finish 	# after inserting step s, the successor step s+1 is enabled
+
+	#finished checks whether schedule is complete (i.e. no deadlock)
 	finished = True    
 	for m in range(machines):
 		finished = finished and (next[m] >= len(plan[m]))
 
-	#time ermittelt die benötigte Zeit falls die schedule zulässig ist
+	#time records the number of machine cycles needed for the schedule (in case the plan is permissible), otherwise: -1
 	time =-1
 	if finished:
 		for m in range(machines):
 			time = max(time, schedule[m][-1][2])
 	schedule['time']=time
 
-	#Ausgabe: schedule -> Liste von 3-Tupeln (Step, Startzeit, Endzeit) je Maschine
-	#		  time   ->   benötigte Zeit der Schedule (-1 falls die Schedule ungütig ist)
+	#output: schedule -> List of 3-tuples (Step, starting time, finish time) for every machine
+	#		  time    ->   number of machine cycles needed for the plan
 	return schedule
