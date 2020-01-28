@@ -8,7 +8,9 @@ from instanceparser import parse_instance
 from realize_plan import realize_plan
 from neighbourhood import generate_complex_neighbour
 from planner import random_plan, fixed_plan
-import parameters
+
+NO_IMPROVE_MAX = 20 	# How many iterations without improvement before we stop?
+TRIES = 5 				# From how many different starting schedules do we run the tabu search?
 
 MODE = 'Experimental'	# MODE variable shows whether the program is supposed to measure performance 
 						# on a preset list of plans ('Experimental') or supposed to run for arbitrary plans ('Active')
@@ -54,7 +56,7 @@ def search_schedule(plan):
 	valid = 0
 	invalid = 0
 
-	while no_improve < globals()['no_improvement']:
+	while no_improve < NO_IMPROVE_MAX:
 		# Find best neighbour for current plan
 		best_time = -1
 		aspiration_check = []
@@ -74,7 +76,7 @@ def search_schedule(plan):
 								penalty += len(frequencies[plan[m][j]])
 							if plan[m][i] in frequencies:
 								penalty += len(frequencies[plan[m][i]])
-							penalty *= globals()['frequency_influence']
+							penalty *= FREQUENCY_INFLUENCE
 							if (best_time == -1) or (sched['time'] + penalty < best_time):
 								if (plan[m][j],plan[m][i]) in tabus: 
 									aspiration_check.append((copy.deepcopy(sched),penalty,m,i,j))
@@ -122,11 +124,11 @@ def search_schedule(plan):
 				tabus[tabu] -= 1 
 			else:
 				del tabus[tabu]
-		tabus[(op1,op2)] = globals()['recency_memory']
+		tabus[(op1,op2)] = RECENCY_MEMORY
 
 		# Update frequency memory
 		for operation in list(frequencies):
-			if frequencies[operation][0] == (iteration - globals()['frequency_memory']): 
+			if frequencies[operation][0] == (iteration - FREQUENCY_MEMORY): 
 				frequencies[operation].pop(0)
 				if len(frequencies[operation]) == 0: del frequencies[operation]
 
@@ -147,11 +149,6 @@ def search_schedule(plan):
 
 def main():
 	start_time = time.time()
-	#set global values
-	globals()['recency_memory'] = parameters.RECENCY_MEMORY
-	globals()['frequency_memory'] = parameters.FREQUENCY_MEMORY
-	globals()['no_improvement'] = parameters.NO_IMPROVE_MAX
-	globals()['tries'] = parameters.TRIES
 
 	# Decide, on which instance to test our code
 	if len(sys.argv) > 1:
@@ -173,7 +170,7 @@ def main():
 
 	# Run the tabu search
 	optimum = -1
-	for i in range(globals()['tries']):
+	for i in range(TRIES):
 		if MODE == 'Active':
 			plan = random_plan(plan)
 		elif MODE == 'Experimental':
@@ -198,11 +195,17 @@ def main():
 
 
 def set_dynamic_parameters(plan):
+	global RECENCY_MEMORY, FREQUENCY_MEMORY, FREQUENCY_INFLUENCE
 	jobs = plan['jobs']
 	steps = plan['steps']
+	machines = plan['machines']
 	weight = 0.25 * math.sqrt(jobs * steps)
-	globals()['frequency_influence'] = weight
-	print("Weight of frequent move is %s" % round(weight))
+	RECENCY_MEMORY = steps*machines/10			# How long are specific swaps tabu?
+	FREQUENCY_MEMORY = steps*machines/2			# For how many steps do we remember our moves
+	FREQUENCY_INFLUENCE = round(weight,2)		# Weight for the influence of the frequency
+	print("Swaps are Tabu for %s steps" % FREQUENCY_MEMORY)
+	print("Frequeny Memory remembers the past %s steps" % FREQUENCY_MEMORY)
+	print("Weight of frequency of moves is %s" % FREQUENCY_INFLUENCE)
 	
 
 if __name__ == "__main__": main()
