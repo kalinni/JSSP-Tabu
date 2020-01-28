@@ -3,6 +3,7 @@ from os import path
 import math
 import time
 import copy
+import pickle
 
 from instanceparser import parse_instance
 from realize_plan import realize_plan
@@ -10,11 +11,22 @@ from neighbourhood import generate_complex_neighbour
 from planner import random_plan, fixed_plan
 
 NO_IMPROVE_MAX = 20 	# How many iterations without improvement before we stop?
-TRIES = 5 				# From how many different starting schedules do we run the tabu search?
+TRIES = 10 				# From how many different starting schedules do we run the tabu search?
 
 MODE = 'Experimental'	# MODE variable shows whether the program is supposed to measure performance 
 						# on a preset list of plans ('Experimental') or supposed to run for arbitrary plans ('Active')
 
+INSTANCES = ['abz5', 'abz6', 'abz7', 'abz8', 'abz9', 'ft06', 'ft10', 'ft20', 
+	'la01', 'la02', 'la03', 'la04', 'la05', 'la06', 'la07', 'la08', 'la09', 'la10', 
+	'la11', 'la12', 'la13', 'la14', 'la15', 'la16', 'la17', 'la18', 'la19', 'la20', 
+	'la21', 'la22', 'la23', 'la24', 'la25', 'la26', 'la27', 'la28', 'la29', 'la30', 
+	'orb01', 'orb02', 'orb03', 'orb04', 'orb05', 'orb06', 'orb07', 'orb08', 'orb09', 'orb10', 
+	'swv01', 'swv02', 'swv03', 'swv04', 'swv05', 'swv06', 'swv07', 'swv08', 'swv09', 'swv10', 
+	'swv11', 'swv12', 'swv13', 'swv14', 'swv15', 'swv16', 'swv17', 'swv18', 'swv19', 'swv20', 
+	'yn1', 'yn2', 'yn3', 'yn4']
+
+# This function identifies any inconsistency in a given schedule 
+# if no inconsistency is present, it instead displays the schedule 
 def print_schedule(schedule, plan):
 	timetable = [ [ 0 for s in range(plan['steps']) ] for j in range(plan['jobs']) ]
 	if schedule['time'] < 0: 
@@ -38,9 +50,12 @@ def print_schedule(schedule, plan):
 					print("Steps from the same Job overlap: %s" % t)
 
 
-
+# This function performs the tabu search on the given problem instance
+# Tasks on the same machine after one another (i.e. neighbours) are swapped to possibly reach a better schedule
 def search_schedule(plan):
-	schedule = realize_plan(plan) # schedule is a tuple, first entry is list of lists of triples, the actual schedule, second entry is the time
+	schedule = realize_plan(plan) 	# schedule is a tuple, 
+									# first entry is list of lists of triples, the actual schedule, 
+									# second entry is the time
 
 	machines = plan['machines']
 
@@ -52,35 +67,42 @@ def search_schedule(plan):
 	iteration=0
 
 
-	# Those two simply serve to see, how many valid and invalid neighbours we check
+	# Those two simply serve to see how many valid and invalid neighbours we check
 	valid = 0
 	invalid = 0
 
-	while no_improve < NO_IMPROVE_MAX:
-		# Find best neighbour for current plan
+	while no_improve < NO_IMPROVE_MAX:					# Find best neighbour for current plan
 		best_time = -1
 		aspiration_check = []
-		for m in range(machines):
-			for i in range(len(plan[m])-1):
-######### Switch between swapping only neighbours and swapping any operations by commenting eighter the next two or the third line.
+
+		for m in range(machines):						# Try out all positions on all machines 
+			for i in range(len(plan[m])-1):				# as swapping elements
+
+	# Switch between swapping only neighbours and swapping any operations by disabling either the next two or the third line.
+	######### 
 				for k in range(1):
 					j = i+1
+	#########
 #				for j in range(i+1,len(plan[m])):
+	#########
+
 					neighbour = generate_complex_neighbour(plan, m, i, j)
-					if neighbour != False:
-						sched = realize_plan(neighbour)
-						if sched['time'] > 0:
+					if neighbour != False:									# for all permissible plans:
+						sched = realize_plan(neighbour)						# construct the corresponding schedule
+						if sched['time'] > 0:								# and compare it to the best schedule seen so far
 							valid += 1
+
 							penalty = 0
 							if plan[m][j] in frequencies:
 								penalty += len(frequencies[plan[m][j]])
 							if plan[m][i] in frequencies:
 								penalty += len(frequencies[plan[m][i]])
 							penalty *= FREQUENCY_INFLUENCE
+
 							if (best_time == -1) or (sched['time'] + penalty < best_time):
 								if (plan[m][j],plan[m][i]) in tabus: 
 									aspiration_check.append((copy.deepcopy(sched),penalty,m,i,j))
-									print("Swapping %s with %s is tabu!" % (plan[m][j],plan[m][i]))
+##									print("Swapping %s with %s is tabu!" % (plan[m][j],plan[m][i]))
 								else:
 									best_neighbour = sched
 									best_time = sched['time'] + penalty
@@ -98,7 +120,7 @@ def search_schedule(plan):
 				best_time = sched['time'] + penalty
 				threshold = best_time
 				swap = (m, i, j)
-				print("Swapping %s with %s is tabu but great! Gives %s" % (plan[m][j],plan[m][i],best_neighbour['time']))
+##				print("Swapping %s with %s is tabu but great! Gives %s" % (plan[m][j],plan[m][i],best_neighbour['time']))
 
 
 		if best_time == -1:
@@ -109,7 +131,7 @@ def search_schedule(plan):
 		op1 = plan[swap[0]][swap[1]]
 		op2 = plan[swap[0]][swap[2]]
 		
-		print("Swapped: %s with %s -- Current schedule's time: %s" % (op1,op2,best_neighbour['time']))
+##		print("Swapped: %s with %s -- Current schedule's time: %s" % (op1,op2,best_neighbour['time']))
 
 		# Update the best schedule and no-improvement-counter
 		if best_neighbour['time'] >= best_schedule['time']:
@@ -177,11 +199,13 @@ def main():
 			plan = fixed_plan(plan, i, instance)
 		else:
 			raise SystemExit("The MODE variable is set to an undefined value!")
+
 		best_schedule = search_schedule(plan)
 		print("")
 		print("Best Schedule in Run: %s" % best_schedule['time'])
 		print("++++++++++++++++++++")
 		print("")
+
 		if (optimum < 0) or (best_schedule['time'] < optimum):
 			optimum = best_schedule['time']
 			optimum_schedule = best_schedule
@@ -204,8 +228,56 @@ def set_dynamic_parameters(plan):
 	FREQUENCY_MEMORY = steps*machines/2			# For how many steps do we remember our moves
 	FREQUENCY_INFLUENCE = round(weight,2)		# Weight for the influence of the frequency
 	print("Swaps are Tabu for %s steps" % FREQUENCY_MEMORY)
-	print("Frequeny Memory remembers the past %s steps" % FREQUENCY_MEMORY)
+	print("Frequency Memory remembers the past %s steps" % FREQUENCY_MEMORY)
 	print("Weight of frequency of moves is %s" % FREQUENCY_INFLUENCE)
 	
+# This function is used to perform tabu search on all benchmarked instances from the lecture
+# It iterates over these instances and stores for all instances 
+# 	the optimum time, 
+# 	the optimum schedule 
+# 	the resulting times from all other iterations of tabu search on this instance
+def serial_experiments ():
+	result = dict()
+	for instance in INSTANCES:
+		print("#########################")
+		instance_path = 'instances/' + instance + '.txt'
+		if not path.exists(instance_path):
+			raise SystemExit("There is no instance at %s" % instance_path)
+		else:
+			print('Now running instance: '+ instance)
+		print("#########################")
+		
+		plan = parse_instance(instance_path) 
+
+		set_dynamic_parameters(plan)
+
+		# Run the tabu search
+		optimum = -1
+		times = []
+		for i in range(TRIES):
+			plan = fixed_plan(plan, i, instance)
+
+			schedule = search_schedule(plan)
+			times.append(schedule['time'])
+			if (optimum < 0) or (schedule['time'] < optimum):
+				optimum = schedule['time']
+				optimum_schedule = schedule
+
+		result[instance] = (optimum, optimum_schedule, times)
+
+	storage = open('results.txt', 'wb')			# for persistency, the results are stored 
+	pickle.dump(result, storage)				# to a txt file
+	storage.close()
+
+def output_serial_results ():
+	file = open('results.txt', 'rb')
+	result = pickle.load(file)
+
+	for instance in result:
+		print("Instance %s has been performed in %s time units" % (instance, result[instance][0]))
+	
+	file.close()
+
+
 
 if __name__ == "__main__": main()
