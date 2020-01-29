@@ -1,9 +1,8 @@
-from operation import Operation
 import copy
 
 #generates one neighbour (plan) by swapping steps at index a and index b on indicated machine
 #returns False if swap fails
-def generate_complex_neighbour(plan, machine, index_a, index_b):
+def generate_neighbour(plan, machine, index_a, index_b):
 	if plan[machine][index_a].job == plan[machine][index_b].job:		# Swapping generates an impermissible schedule 
 		return False													# when two steps of the same job are swapped
 		
