@@ -1,7 +1,7 @@
 import pickle
 from searcher import tabu_search
 
-INSTANCES = ['abz5', 'abz6', 'abz7', 'abz8', 'abz9', 'ft06', 'ft10', 'ft20', 
+INSTANCES_ALL = ['abz5', 'abz6', 'abz7', 'abz8', 'abz9', 'ft06', 'ft10', 'ft20', 
 	'la01', 'la02', 'la03', 'la04', 'la05', 'la06', 'la07', 'la08', 'la09', 'la10', 
 	'la11', 'la12', 'la13', 'la14', 'la15', 'la16', 'la17', 'la18', 'la19', 'la20', 
 	'la21', 'la22', 'la23', 'la24', 'la25', 'la26', 'la27', 'la28', 'la29', 'la30', 
@@ -9,6 +9,13 @@ INSTANCES = ['abz5', 'abz6', 'abz7', 'abz8', 'abz9', 'ft06', 'ft10', 'ft20',
 	'swv01', 'swv02', 'swv03', 'swv04', 'swv05', 'swv06', 'swv07', 'swv08', 'swv09', 'swv10', 
 	'swv11', 'swv12', 'swv13', 'swv14', 'swv15', 'swv16', 'swv17', 'swv18', 'swv19', 'swv20', 
 	'yn1', 'yn2', 'yn3', 'yn4']
+
+MORE_INSTANCES = ['la31', 'la32', 'la33', 'la34', 'la35', 'la36', 'la37', 'la38', 'la39', 'la40']
+
+INSTANCES = ['abz5', 'abz9', 'ft06', 'ft20', 
+	'la01', 'la05', 'la07', 'la10', 'la13', 'la18', 'la23', 'la25', 'la27', 'la28', 
+	'orb01', 'orb04', 'orb10', 'swv01', 'swv05', 'swv07', 'swv08',
+	'swv12', 'swv13', 'swv18', 'yn4']
 
 # This function is used to perform tabu search on all benchmarked instances from the lecture
 # It iterates over these instances and stores for all instances 
