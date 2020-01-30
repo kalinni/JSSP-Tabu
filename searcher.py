@@ -163,8 +163,8 @@ def set_dynamic_parameters(plan):
 	steps = plan['steps']
 	machines = plan['machines']
 	weight = 0.25 * math.sqrt(jobs * steps)
-	RECENCY_MEMORY = steps*machines/10			# How long are specific swaps tabu?
-	FREQUENCY_MEMORY = steps*machines/2			# For how many steps do we remember our moves
+	RECENCY_MEMORY = steps*jobs/10			# How long are specific swaps tabu?
+	FREQUENCY_MEMORY = steps*jobs/2			# For how many steps do we remember our moves
 	FREQUENCY_INFLUENCE = round(weight,2)		# Weight for the influence of the frequency
 	print("Swaps are Tabu for %s steps" % RECENCY_MEMORY)
 	print("Frequency Memory remembers the past %s steps" % FREQUENCY_MEMORY)
