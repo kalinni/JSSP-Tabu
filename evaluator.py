@@ -18,8 +18,6 @@ INSTANCES_ALL = {'abz5': 1234, 'abz6': 943, 'abz7': 656, 'abz8': 665, 'abz9': 67
 	'swv16': 2924, 'swv17': 2794, 'swv18': 2852, 'swv19': 2843, 'swv20': 2823, 
 	'yn1': 884, 'yn2': 904, 'yn3': 892, 'yn4': 968}
 
-MORE_INSTANCES = ['la31', 'la32', 'la33', 'la34', 'la35', 'la36', 'la37', 'la38', 'la39', 'la40']
-
 INSTANCES = [
 	'ft06', # 6x6
 	'la01', 'la05', # 10x5
@@ -40,7 +38,7 @@ INSTANCES = [
 # 	the best time, 
 # 	the best schedule 
 # 	the resulting times from all other iterations of tabu search on this instance
-def serial_experiments (instances = INSTANCES):
+def serial_experiments (instances = list(INSTANCES)):
 	mode = 'Experimental' # For better comparison we work with fixed starting points
 	result = dict()
 
