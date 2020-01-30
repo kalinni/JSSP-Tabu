@@ -12,29 +12,29 @@ def random_plan(plan):
 
 	for i in range(new_plan['machines']):
 		new_plan[i] = []
+	finished = True
+	for n in next_step:											# the loop is performed while there are still steps not
+		finished = finished and not (n < new_plan['steps'])		# sorted into the new plan (i.e. not finished)
+
+	while not finished:
+		options = [ i for i in range(new_plan['jobs']) 			# choose one job among the ones where
+				if next_step[i] < new_plan['steps'] ]				# not all steps have been sorted in yet
+		job = random.choice(options)
+
+		insert = False
+		for m in range(plan['machines']):						# find job and insert the next step into the new plan
+			i = 0
+			while i < len(plan[m]) and not insert:
+				# find the next step of the chosen job in the old plan and copy it into the new plan
+				# insert makes sure that only one job is added in every interation 
+				if plan[m][i].job == job and plan[m][i].step == next_step[job] and not insert:
+					new_plan[m].append(plan[m][i])
+					next_step[job] += 1
+					insert = True
+				i += 1
 		finished = True
-		for n in next_step:											# the loop is performed while there are still steps not
-			finished = finished and not (n < new_plan['steps'])		# sorted into the new plan (i.e. not finished)
-
-		while not finished:
-			options = [ i for i in range(new_plan['jobs']) 			# choose one job among the ones where
-				 if next_step[i] < new_plan['steps'] ]				# not all steps have been sorted in yet
-			job = random.choice(options)
-
-			insert = False
-			for m in range(plan['machines']):						# find job and insert the next step into the new plan
-				i = 0
-				while i < len(plan[m]) and not insert:
-					# find the next step of the chosen job in the old plan and copy it into the new plan
-					# insert makes sure that only one job is added in every interation 
-					if plan[m][i].job == job and plan[m][i].step == next_step[job] and not insert:
-						new_plan[m].append(plan[m][i])
-						next_step[job] += 1
-						insert = True
-					i += 1
-			finished = True
-			for n in next_step:
-				finished = finished and not (n < new_plan['steps'])
+		for n in next_step:
+			finished = finished and not (n < new_plan['steps'])
 	
 	return new_plan
 
