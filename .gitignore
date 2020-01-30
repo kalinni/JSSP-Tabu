@@ -1,0 +1,5 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# PDF output - usually a bad idea to keep this in Git
+*.pdf
