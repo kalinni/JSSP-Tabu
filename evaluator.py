@@ -1,4 +1,7 @@
 import pickle
+import numpy as np
+import matplotlib.pyplot as plt
+
 from searcher import tabu_search
 
 INSTANCES_ALL = {'abz5': 1234, 'abz6': 943, 'abz7': 656, 'abz8': 665, 'abz9': 679, 
@@ -92,3 +95,24 @@ def performance(resfile='results/results.txt'):
 		print("Caution! The following instances got schedules performing better than the best solution known so far!")
 		for instance in better:
 			print(instance)
+
+	N = len(result)
+	optimal = []
+	our_times = []
+
+	for instance in INSTANCES_ALL:
+		optimal.append(INSTANCES_ALL[instance])
+		our_times.append(result[instance][0] - INSTANCES_ALL[instance])
+
+	ind = np.arange(N)
+	width = 0.4
+
+	p1 = plt.bar(ind, optimal, width)
+	p2 = plt.bar(ind, our_times, width, bottom=optimal)
+
+	plt.ylabel('Time')
+	plt.xticks(ind, list(INSTANCES_ALL))
+	plt.yticks(np.arange(0, 5000, 500))
+	plt.legend((p1[0], p2[0]), ('Optimal', 'Our Results'))
+
+	plt.show()
