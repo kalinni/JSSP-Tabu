@@ -157,21 +157,21 @@ def search_schedule(plan):
 	print("valid: %s, invalid: %s" % (valid,invalid))
 	return best_schedule
 
-def set_dynamic_parameters(plan):
+def set_dynamic_parameters(plan, weights=(10, 2, 0.25)):
 	global RECENCY_MEMORY, FREQUENCY_MEMORY, FREQUENCY_INFLUENCE
 	jobs = plan['jobs']
 	steps = plan['steps']
 	machines = plan['machines']
-	weight = 0.25 * math.sqrt(jobs * steps)
-	RECENCY_MEMORY = steps*jobs/10			# How long are specific swaps tabu?
-	FREQUENCY_MEMORY = steps*jobs/2			# For how many steps do we remember our moves
-	FREQUENCY_INFLUENCE = round(weight,2)		# Weight for the influence of the frequency
+	(recency_weight, frequency_weight, influence_weight) = weights
+	RECENCY_MEMORY = steps*jobs/recency_weight									# How long are specific swaps tabu?
+	FREQUENCY_MEMORY = steps*jobs/frequency_weight								# For how many steps do we remember our moves
+	FREQUENCY_INFLUENCE = round((influence_weight * math.sqrt(jobs * steps)),2)		# Weight for the influence of the frequency
 	print("Swaps are Tabu for %s steps" % RECENCY_MEMORY)
 	print("Frequency Memory remembers the past %s steps" % FREQUENCY_MEMORY)
 	print("Weight of frequency of moves is %s" % FREQUENCY_INFLUENCE)
 	print("")
 
-def tabu_search(instance, mode = MODE):
+def tabu_search(instance, mode = MODE, weights=(10, 2, 0.25)):
 	instance_path = 'instances/' + instance + '.txt'
 	if not path.exists(instance_path):
 		raise SystemExit("There is no instance at %s" % instance_path)
@@ -180,7 +180,7 @@ def tabu_search(instance, mode = MODE):
 	### Note: Will always give a valid schedule, due to how we get the plan from the instance
 	plan = parse_instance(instance_path) # plan is a dict, also contains machine, step and job numbers
 
-	set_dynamic_parameters(plan)
+	set_dynamic_parameters(plan, weights)
 
 	# Run the tabu search for fixed number of starting points
 	best_time = -1
