@@ -48,7 +48,7 @@ INSTANCES = [
 # 	the best time, 
 # 	the best schedule 
 # 	the resulting times from all other iterations of tabu search on this instance
-def serial_experiments (instances = list(INSTANCES)):
+def serial_experiments (instances = list(INSTANCES_ALL)):
 	mode = 'Experimental' # For better comparison we work with fixed starting points
 	result = dict()
 
