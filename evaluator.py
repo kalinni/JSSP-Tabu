@@ -1,4 +1,5 @@
 import pickle
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -86,11 +87,27 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 
 	# Lists for the stacked bar chart
 	optimals = []
-	our_times = []
+	our_best = []
+	our_best_diff = []
+	means = []
+	deviations = []
+
 
 	for instance in result:
 		optimals.append(INSTANCES_ALL[instance])
-		our_times.append(result[instance][0] - INSTANCES_ALL[instance])
+		our_best_diff.append(result[instance][0] - INSTANCES_ALL[instance])
+		our_best.append(result[instance][0])
+		all_times = result[instance][2]
+		mean = sum(all_times)/len(all_times)
+		means.append(mean-result[instance][0])
+		st_dev = 0
+		for time in all_times:
+			st_dev += (time - mean)**2
+		st_dev /= len(all_times)
+		st_dev = math.sqrt(st_dev)
+		deviations.append(st_dev)
+
+
 		percent = round((result[instance][0]/INSTANCES_ALL[instance] -1)*100,1)
 		differences.append(percent)
 		if (result[instance][0] - INSTANCES_ALL[instance]) == 0 : 
@@ -114,7 +131,8 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 	plt.figure(figsize=(20,10))
 
 	p1 = plt.bar(ind, optimals, width)
-	p2 = plt.bar(ind, our_times, width, bottom=optimals)
+	p2 = plt.bar(ind, our_best_diff, width, bottom=optimals)
+	p3 = plt.bar(ind, means, width, bottom=our_best, yerr=deviations)
 
 	plt.ylabel('Time')
 	plt.title('Results for %s' % str(weights) 
@@ -122,7 +140,7 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 		+ "\n %s out of %s schedules where optimal!" % (optimal, len(result)))
 	plt.xticks(ind, list(result), rotation='vertical')
 	plt.yticks(np.arange(0, 5000, 500))
-	plt.legend((p1[0], p2[0]), ('Optimal', 'Our Results'))
+	plt.legend((p1[0], p2[0], p3[0]), ('Optimal', 'Our Best', 'Our Mean'))
 
 	plt.savefig(resfile.replace('.txt','.png'), dpi=500)
 
