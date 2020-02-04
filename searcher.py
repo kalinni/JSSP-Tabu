@@ -9,9 +9,9 @@ from scheduler import realize_plan
 from neighbourhood import generate_neighbour
 from planner import random_plan, fixed_plan
 
-NO_IMPROVE_MAX = 20 	# How many iterations without improvement before we stop?
-NO_IMPROVE_SWITCH = 10	# How many iterations without improvement before we switch to a more complex neighbourhood?
-TRIES = 10				# From how many different starting schedules do we run the tabu search?
+NO_IMPROVE_MAX = 12		# How many iterations without improvement before we stop?
+NO_IMPROVE_SWITCH = 6	# How many iterations without improvement before we switch to a more complex neighbourhood?
+TRIES = 5				# From how many different starting schedules do we run the tabu search?
 
 MODE = 'Experimental'	# MODE variable shows whether the program is supposed to measure performance 
 						# on a preset list of plans ('Experimental') or supposed to run for arbitrary plans ('Active')
@@ -154,21 +154,21 @@ def search_schedule(plan):
 	print("valid: %s, invalid: %s, aspiration %s, iterations %s" % (valid,invalid,aspiration, iteration))
 	return best_schedule
 
-def set_dynamic_parameters(plan, weights=(2, 2, 4)):
+def set_dynamic_parameters(plan, weights=(0.5, 2, 0.3)):
 	global RECENCY_MEMORY, FREQUENCY_MEMORY, FREQUENCY_INFLUENCE
 	jobs = plan['jobs']
 	steps = plan['steps']
 	machines = plan['machines']
 	(recency_weight, frequency_weight, influence_weight) = weights
-	RECENCY_MEMORY = machines/recency_weight									# How long are specific swaps tabu?
-	FREQUENCY_MEMORY = machines*jobs/10*frequency_weight								# For how many steps do we remember our moves
-	FREQUENCY_INFLUENCE = influence_weight #round((influence_weight * math.sqrt(jobs * steps)),2)		# Weight for the influence of the frequency
+	RECENCY_MEMORY = machines*recency_weight									# How long are specific swaps tabu?
+	FREQUENCY_MEMORY = machines*frequency_weight								# For how many steps do we remember our moves
+	FREQUENCY_INFLUENCE = round((influence_weight * math.sqrt(jobs * steps)),2)		# Weight for the influence of the frequency
 	print("Swaps are Tabu for %s steps" % RECENCY_MEMORY)
 	print("Frequency Memory remembers the past %s steps" % FREQUENCY_MEMORY)
 	print("Weight of frequency of moves is %s" % FREQUENCY_INFLUENCE)
 	print("")
 
-def tabu_search(instance, mode = MODE, weights=(2, 2, 4)):
+def tabu_search(instance, mode = MODE, weights=(0.5, 2, 0.3)):
 	instance_path = 'instances/' + instance + '.txt'
 	if not path.exists(instance_path):
 		raise SystemExit("There is no instance at %s" % instance_path)

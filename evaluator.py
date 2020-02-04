@@ -47,6 +47,21 @@ INSTANCES = [
 	'swv12', 'swv13', 'swv18' #50x10
 ]
 
+SOME_INSTANCES = [
+	'ft06', # 6x6
+	'la01', 'la05', # 10x5
+	'la07', # 15x5
+	'abz5', 'orb10', # 10x10
+	'ft20', 'la13', # 20x5
+	'la23', # 15x10
+	'swv01', # 20x10
+	'la39', # 15x15
+	'la31', # 30x10
+	'abz9', 'swv07', # 20x15 
+	'yn4', #20x20
+	'swv13', 'swv18' #50x10
+]
+
 # This function is used to perform tabu search on all benchmarked instances from the lecture
 # It iterates over these instances and stores for all instances 
 # 	the best time, 
@@ -163,12 +178,12 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 
 	plt.savefig(resfile.replace('.txt','.png'), dpi=500)
 
-def parameter_checker(instances=INSTANCES):
+def parameter_checker(instances=SOME_INSTANCES):
 	'''
 	This is a function we used to play around with the influence of our parameters. 
 	'''
 	mode = 'Experimental' # For better comparison we work with fixed starting points
-	list_of_weights = [(10, 2, 0.25),(5,1,0.25),(10,2,0.125),(15,4,0.25),(10,2,0.5)]
+	list_of_weights = [(0.5, 2, 0.3),(1, 2, 0.3),(0.5, 4, 0.3),(0.5, 2, 0.6),(0.5, 2, 0.15)]
 	for weights in list_of_weights:
 
 		result = dict()
