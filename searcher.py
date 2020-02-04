@@ -10,7 +10,8 @@ from neighbourhood import generate_neighbour
 from planner import random_plan, fixed_plan
 
 NO_IMPROVE_MAX = 20 	# How many iterations without improvement before we stop?
-TRIES = 3				# From how many different starting schedules do we run the tabu search?
+NO_IMPROVE_SWITCH = 10	# How many iterations without improvement before we switch to a more complex neighbourhood?
+TRIES = 10				# From how many different starting schedules do we run the tabu search?
 
 MODE = 'Experimental'	# MODE variable shows whether the program is supposed to measure performance 
 						# on a preset list of plans ('Experimental') or supposed to run for arbitrary plans ('Active')
@@ -67,15 +68,12 @@ def search_schedule(plan):
 		# Try out all positions on all machines for swapping
 		for m in range(machines):
 			for i in range(len(plan[m])-1):
-
-	# Switch between swapping only neighbours and swapping any operations by disabling either the next two or the third line.
-	######### 
-				for k in range(1):
-					j = i+1
-	#########
-#				for j in range(i+1,len(plan[m])):
-	#########
-
+				# If we had no improvement recently switch from fast but simple swapping of only neighbours to more complex swapping of any operations on the same machine
+				if no_improve < NO_IMPROVE_SWITCH: 
+					neighbourrange = [i+1]
+				else:
+					neighbourrange = range(i+1,len(plan[m]))
+				for j in neighbourrange:
 					neighbour = generate_neighbour(plan, m, i, j)
 					if neighbour != False:									# for all permissible plans:
 						sched = realize_plan(neighbour)						# construct the corresponding schedule
@@ -83,14 +81,12 @@ def search_schedule(plan):
 							valid += 1
 
 							penalty = 0
-							if plan[m][j] in frequencies:
-								penalty += len(frequencies[plan[m][j]])
-							if plan[m][i] in frequencies:
-								penalty += len(frequencies[plan[m][i]])
-							penalty *= FREQUENCY_INFLUENCE
+							if m in frequencies:
+								penalty += len(frequencies[m])
+							penalty *= FREQUENCY_INFLUENCE + no_improve
 
 							if (best_time == -1) or (sched['time'] + penalty < best_time):
-								if plan[m][j] in tabus or plan[m][i] in tabus: 
+								if m in tabus: 
 									aspiration_check.append((copy.deepcopy(sched),penalty,m,i,j))
 ##									print("Swapping %s with %s is tabu!" % (plan[m][j],plan[m][i]))
 								else:
@@ -118,11 +114,11 @@ def search_schedule(plan):
 			print("No valid neighbour found.")
 			break
 
-		# Get Operations swapped
+		# Get swapped operations
 		op1 = plan[swap[0]][swap[1]]
 		op2 = plan[swap[0]][swap[2]]
 		
-##		print("Swapped: %s with %s -- Current schedule's time: %s" % (op1,op2,best_neighbour['time']))
+		print("Swapped: %s with %s -- Current schedule's time: %s" % (op1,op2,best_neighbour['time']))
 
 		# Update the best schedule and no-improvement-counter
 		if best_neighbour['time'] >= best_schedule['time']:
@@ -132,49 +128,47 @@ def search_schedule(plan):
 			no_improve = 0
 
 		# Update tabus and add new tabu
-		for tabu in list(tabus):
-			if tabus[tabu] > 1:	
-				tabus[tabu] -= 1 
+		for machine in list(tabus):
+			if tabus[machine] > 1:	
+				tabus[machine] -= 1 
 			else:
-				del tabus[tabu]
-		tabus[op1] = RECENCY_MEMORY
-		tabus[op2] = RECENCY_MEMORY
+				del tabus[machine]
+		tabus[swap[0]] = RECENCY_MEMORY
 
 		# Update frequency memory
-		for operation in list(frequencies):
-			if frequencies[operation][0] == (iteration - FREQUENCY_MEMORY): 
-				frequencies[operation].pop(0)
-				if len(frequencies[operation]) == 0: del frequencies[operation]
+		for machine in list(frequencies):
+			if frequencies[machine][0] == (iteration - FREQUENCY_MEMORY): 
+				frequencies[machine].pop(0)
+				if len(frequencies[machine]) == 0: del frequencies[machine]
 
-		for op in (op1,op2):
-			if op in frequencies:
-				frequencies[op].append(iteration)
-			else:
-				frequencies[op] = [iteration]
+		if swap[0] in frequencies:
+			frequencies[swap[0]].append(iteration)
+		else:
+			frequencies[swap[0]] = [iteration]
 
 		iteration += 1
 
 		# Make the plan giving the best neighbour the starting point for the next iteration
 		plan = generate_neighbour(plan, swap[0], swap[1], swap[2])
 
-	print("valid: %s, invalid: %s, aspiration: %s" % (valid,invalid, aspiration))
+	print("valid: %s, invalid: %s, aspiration %s, iterations %s" % (valid,invalid,aspiration, iteration))
 	return best_schedule
 
-def set_dynamic_parameters(plan, weights=(10, 2, 0.25)):
+def set_dynamic_parameters(plan, weights=(2, 2, 4)):
 	global RECENCY_MEMORY, FREQUENCY_MEMORY, FREQUENCY_INFLUENCE
 	jobs = plan['jobs']
 	steps = plan['steps']
 	machines = plan['machines']
 	(recency_weight, frequency_weight, influence_weight) = weights
-	RECENCY_MEMORY = steps*jobs/recency_weight									# How long are specific swaps tabu?
-	FREQUENCY_MEMORY = steps*jobs/frequency_weight								# For how many steps do we remember our moves
-	FREQUENCY_INFLUENCE = round((influence_weight * math.sqrt(jobs * steps)),2)		# Weight for the influence of the frequency
+	RECENCY_MEMORY = machines/recency_weight									# How long are specific swaps tabu?
+	FREQUENCY_MEMORY = machines*jobs/10*frequency_weight								# For how many steps do we remember our moves
+	FREQUENCY_INFLUENCE = influence_weight #round((influence_weight * math.sqrt(jobs * steps)),2)		# Weight for the influence of the frequency
 	print("Swaps are Tabu for %s steps" % RECENCY_MEMORY)
 	print("Frequency Memory remembers the past %s steps" % FREQUENCY_MEMORY)
 	print("Weight of frequency of moves is %s" % FREQUENCY_INFLUENCE)
 	print("")
 
-def tabu_search(instance, mode = MODE, weights=(10, 2, 0.25)):
+def tabu_search(instance, mode = MODE, weights=(2, 2, 4)):
 	instance_path = 'instances/' + instance + '.txt'
 	if not path.exists(instance_path):
 		raise SystemExit("There is no instance at %s" % instance_path)
