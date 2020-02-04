@@ -77,6 +77,20 @@ def output_serial_results (path = 'results/results.txt'):
 	file.close()
 
 def performance(resfile='results/results.txt',weights='[no weights known]'):
+	'''
+	Given a result file produced for example by the serial_experiments() method 
+	(a dict() containing results per instances pickelt as a txt file)
+	this method prints an overview of the results to the command line,
+	calculates how much longer our schedules take on average,
+	checks how many optimal schedules we found 
+	and generates a chart containing 
+		- the best times known
+		- the best times from our run
+		- the mean of our times
+		- the standard deviation to that mean for our times
+
+	The chart is saved as a png with the same name as the given results file
+	'''
 	file = open(resfile, 'rb')
 	result = pickle.load(file)
 
@@ -87,9 +101,9 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 
 	# Lists for the stacked bar chart
 	optimals = []
-	our_best = []
-	our_best_diff = []
-	means = []
+	our_best = [] # needed to stack means on top of our best
+	our_best_diff = [] # difference to optimals
+	means_diff = [] # difference to our best
 	deviations = []
 
 
@@ -97,9 +111,13 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 		optimals.append(INSTANCES_ALL[instance])
 		our_best_diff.append(result[instance][0] - INSTANCES_ALL[instance])
 		our_best.append(result[instance][0])
+
+		# calculate mean
 		all_times = result[instance][2]
 		mean = sum(all_times)/len(all_times)
-		means.append(mean-result[instance][0])
+		means_diff.append(mean-result[instance][0])
+
+		# calculate standard deviation
 		st_dev = 0
 		for time in all_times:
 			st_dev += (time - mean)**2
@@ -107,11 +125,12 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 		st_dev = math.sqrt(st_dev)
 		deviations.append(st_dev)
 
-
+		# calculate how much longer our schedules take and how many optimal times we found
 		percent = round((result[instance][0]/INSTANCES_ALL[instance] -1)*100,1)
 		differences.append(percent)
 		if (result[instance][0] - INSTANCES_ALL[instance]) == 0 : 
 			optimal += 1
+		# Check, whether some results seem to be better then the optimal known so far
 		elif (result[instance][0] - INSTANCES_ALL[instance]) < 0: 
 			better.append(instance)
 		print("Instance %s ---- our best: %s ---- optimum: %s ---- difference in percent: %s " % (instance, result[instance][0], INSTANCES_ALL[instance], percent))
@@ -119,12 +138,12 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 	print("On average our schedules take %s" % (round(sum(differences)/len(differences),2)) + "% more time.")
 	print("%s out of %s schedules where optimal!" % (optimal, len(result)))
 	
-	# Check, whether some results seem to be better then the optimal known so far
 	if len(better) > 0:
 		print("Caution! The following instances got schedules performing better than the best solution known so far!")
 		for instance in better:
 			print(instance)
 
+	# Generate the bar chart
 	N = len(result)
 	ind = np.arange(N)
 	width = 0.4
@@ -132,7 +151,7 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 
 	p1 = plt.bar(ind, optimals, width)
 	p2 = plt.bar(ind, our_best_diff, width, bottom=optimals)
-	p3 = plt.bar(ind, means, width, bottom=our_best, yerr=deviations)
+	p3 = plt.bar(ind, means_diff, width, bottom=our_best, yerr=deviations)
 
 	plt.ylabel('Time')
 	plt.title('Results for %s' % str(weights) 
@@ -140,11 +159,14 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 		+ "\n %s out of %s schedules where optimal!" % (optimal, len(result)))
 	plt.xticks(ind, list(result), rotation='vertical')
 	plt.yticks(np.arange(0, 5000, 500))
-	plt.legend((p1[0], p2[0], p3[0]), ('Optimal', 'Our Best', 'Our Mean'))
+	plt.legend((p1[0], p2[0], p3[0]), ('Optimal', 'Our Best', 'Our Mean with Standard Deviation'))
 
 	plt.savefig(resfile.replace('.txt','.png'), dpi=500)
 
 def parameter_checker(instances=INSTANCES):
+	'''
+	This is a function we used to play around with the influence of our parameters. 
+	'''
 	mode = 'Experimental' # For better comparison we work with fixed starting points
 	list_of_weights = [(10, 2, 0.25),(5,1,0.25),(10,2,0.125),(15,4,0.25),(10,2,0.5)]
 	for weights in list_of_weights:
