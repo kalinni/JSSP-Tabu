@@ -1,6 +1,6 @@
 # JSSP-Tabu
 
-This is an implementation of the tabu search algorithm for solving the Job Shop Scheduling Problem. It was done as a solution to the practical task for the Problem Solving and Search in AI lecture at TU Dresden.
+This is an implementation of the tabu search algorithm for solving the Job Shop Scheduling Problem (JSSP). It was done as a solution to the practical task for the Problem Solving and Search in AI lecture at TU Dresden.
 
 ## Our Vocabulary for the JSSP
 
