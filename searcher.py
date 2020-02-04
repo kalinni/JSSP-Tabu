@@ -10,7 +10,7 @@ from neighbourhood import generate_neighbour
 from planner import random_plan, fixed_plan
 
 NO_IMPROVE_MAX = 20 	# How many iterations without improvement before we stop?
-TRIES = 10				# From how many different starting schedules do we run the tabu search?
+TRIES = 3				# From how many different starting schedules do we run the tabu search?
 
 MODE = 'Experimental'	# MODE variable shows whether the program is supposed to measure performance 
 						# on a preset list of plans ('Experimental') or supposed to run for arbitrary plans ('Active')
@@ -56,6 +56,7 @@ def search_schedule(plan):
 	# Those two simply serve to see how many valid and invalid neighbours we check
 	valid = 0
 	invalid = 0
+	aspiration = 0
 
 	# Start of the Tabu Search
 	### While last improvement is less than a fixed number of steps away, find best neighbour for current plan
@@ -89,7 +90,7 @@ def search_schedule(plan):
 							penalty *= FREQUENCY_INFLUENCE
 
 							if (best_time == -1) or (sched['time'] + penalty < best_time):
-								if (plan[m][j],plan[m][i]) in tabus: 
+								if plan[m][j] in tabus or plan[m][i] in tabus: 
 									aspiration_check.append((copy.deepcopy(sched),penalty,m,i,j))
 ##									print("Swapping %s with %s is tabu!" % (plan[m][j],plan[m][i]))
 								else:
@@ -109,6 +110,7 @@ def search_schedule(plan):
 				best_time = sched['time'] + penalty
 				threshold = best_time
 				swap = (m, i, j)
+				aspiration += 1
 ##				print("Swapping %s with %s is tabu but great! Gives %s" % (plan[m][j],plan[m][i],best_neighbour['time']))
 
 
@@ -135,7 +137,8 @@ def search_schedule(plan):
 				tabus[tabu] -= 1 
 			else:
 				del tabus[tabu]
-		tabus[(op1,op2)] = RECENCY_MEMORY
+		tabus[op1] = RECENCY_MEMORY
+		tabus[op2] = RECENCY_MEMORY
 
 		# Update frequency memory
 		for operation in list(frequencies):
@@ -154,7 +157,7 @@ def search_schedule(plan):
 		# Make the plan giving the best neighbour the starting point for the next iteration
 		plan = generate_neighbour(plan, swap[0], swap[1], swap[2])
 
-	print("valid: %s, invalid: %s" % (valid,invalid))
+	print("valid: %s, invalid: %s, aspiration: %s" % (valid,invalid, aspiration))
 	return best_schedule
 
 def set_dynamic_parameters(plan):
@@ -171,7 +174,7 @@ def set_dynamic_parameters(plan):
 	print("Weight of frequency of moves is %s" % FREQUENCY_INFLUENCE)
 	print("")
 
-def tabu_search(instance, mode = MODE):
+def tabu_search(instance, mode = MODE, fixed_parameters = []):
 	instance_path = 'instances/' + instance + '.txt'
 	if not path.exists(instance_path):
 		raise SystemExit("There is no instance at %s" % instance_path)
@@ -181,6 +184,16 @@ def tabu_search(instance, mode = MODE):
 	plan = parse_instance(instance_path) # plan is a dict, also contains machine, step and job numbers
 
 	set_dynamic_parameters(plan)
+	for fixed_parameter in fixed_parameters:
+		if fixed_parameter == 'Recency Memory':
+			RECENCY_MEMORY = fixed_parameters[fixed_parameter]
+			print("Swaps are now Tabu for %s steps" % RECENCY_MEMORY)
+		if fixed_parameter == 'Frequency Memory':
+			FREQUENCY_MEMORY = fixed_parameters[fixed_parameter]
+			print("Frequency Memory now remembers the past %s steps" % FREQUENCY_MEMORY)
+		if fixed_parameter == 'Frequency Influence':
+			FREQUENCY_INFLUENCE = fixed_parameters[fixed_parameter]
+			print("Weight of frequency of moves is now %s" % FREQUENCY_INFLUENCE)
 
 	# Run the tabu search for fixed number of starting points
 	best_time = -1
