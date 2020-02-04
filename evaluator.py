@@ -21,16 +21,8 @@ INSTANCES_ALL = {'abz5': 1234, 'abz6': 943, 'abz7': 656, 'abz8': 665, 'abz9': 67
 	'swv06': 1675, 'swv07': 1594, 'swv08': 1755, 'swv09': 1661, 'swv10': 1743, 
 	'swv11': 2983, 'swv12': 2979, 'swv13': 3104, 'swv14': 2968, 'swv15': 2886, 
 	'swv16': 2924, 'swv17': 2794, 'swv18': 2852, 'swv19': 2843, 'swv20': 2823, 
-	'yn1': 884, 'yn2': 904, 'yn3': 892, 'yn4': 968}
-
-MORE_INSTANCES = ['abz7', 'abz8', 'abz9', 
-	'ft20', 
-	'la01', 'la02', 'la03', 'la04', 'la05', 'la06', 'la07', 'la08', 'la09', 'la10', 
-	'la11', 'la12', 'la13', 'la14', 'la15', 
-	'la21', 'la22', 'la23', 'la24', 'la25', 'la26', 'la27', 'la28', 'la29', 'la30', 
-	'swv01', 'swv02', 'swv03', 'swv04', 'swv05', 'swv06', 'swv07', 'swv08', 'swv09', 'swv10', 
-	'swv11', 'swv12', 'swv13', 'swv14', 'swv15', 'swv16', 'swv17', 'swv18', 'swv19', 'swv20'
-]
+	'yn1': 884, 'yn2': 904, 'yn3': 892, 'yn4': 968
+}
 
 INSTANCES = [
 	'ft06', # 6x6
@@ -52,7 +44,7 @@ INSTANCES = [
 # 	the best time, 
 # 	the best schedule 
 # 	the resulting times from all other iterations of tabu search on this instance
-def serial_experiments (instances = list(INSTANCES_ALL)):
+def serial_experiments (instances = list(INSTANCES_ALL), path = 'results/results.txt'):
 	mode = 'Experimental' # For better comparison we work with fixed starting points
 	result = dict()
 
@@ -63,10 +55,12 @@ def serial_experiments (instances = list(INSTANCES_ALL)):
 
 		result[instance] = tabu_search(instance, mode)
 
-	storage = open('results/results.txt', 'wb')			# for persistency, the results are stored 
+	storage = open(path, 'wb')			# for persistency, the results are stored 
 	pickle.dump(result, storage)				# to a txt file
 	storage.close()
 
+#The result from serial experiments is stored in a binary file
+#This function outputs all the results in a readable format
 def output_serial_results (path = 'results/results.txt'):
 	file = open(path, 'rb')
 	result = pickle.load(file)
