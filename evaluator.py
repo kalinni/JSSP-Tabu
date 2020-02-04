@@ -1,4 +1,5 @@
 import pickle
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -75,13 +76,38 @@ def output_serial_results (path = 'results/results.txt'):
 	
 	file.close()
 
-def performance(resfile='results/results.txt'):
+def performance(resfile='results/results.txt',weights='[no weights known]'):
 	file = open(resfile, 'rb')
 	result = pickle.load(file)
+
+	# For calculating some stats
 	differences = []
 	optimal = 0
 	better = []
+
+	# Lists for the stacked bar chart
+	optimals = []
+	our_best = []
+	our_best_diff = []
+	means = []
+	deviations = []
+
+
 	for instance in result:
+		optimals.append(INSTANCES_ALL[instance])
+		our_best_diff.append(result[instance][0] - INSTANCES_ALL[instance])
+		our_best.append(result[instance][0])
+		all_times = result[instance][2]
+		mean = sum(all_times)/len(all_times)
+		means.append(mean-result[instance][0])
+		st_dev = 0
+		for time in all_times:
+			st_dev += (time - mean)**2
+		st_dev /= len(all_times)
+		st_dev = math.sqrt(st_dev)
+		deviations.append(st_dev)
+
+
 		percent = round((result[instance][0]/INSTANCES_ALL[instance] -1)*100,1)
 		differences.append(percent)
 		if (result[instance][0] - INSTANCES_ALL[instance]) == 0 : 
@@ -89,30 +115,50 @@ def performance(resfile='results/results.txt'):
 		elif (result[instance][0] - INSTANCES_ALL[instance]) < 0: 
 			better.append(instance)
 		print("Instance %s ---- our best: %s ---- optimum: %s ---- difference in percent: %s " % (instance, result[instance][0], INSTANCES_ALL[instance], percent))
+	
 	print("On average our schedules take %s" % (round(sum(differences)/len(differences),2)) + "% more time.")
 	print("%s out of %s schedules where optimal!" % (optimal, len(result)))
+	
+	# Check, whether some results seem to be better then the optimal known so far
 	if len(better) > 0:
 		print("Caution! The following instances got schedules performing better than the best solution known so far!")
 		for instance in better:
 			print(instance)
 
 	N = len(result)
-	optimal = []
-	our_times = []
-
-	for instance in INSTANCES_ALL:
-		optimal.append(INSTANCES_ALL[instance])
-		our_times.append(result[instance][0] - INSTANCES_ALL[instance])
-
 	ind = np.arange(N)
 	width = 0.4
+	plt.figure(figsize=(20,10))
 
-	p1 = plt.bar(ind, optimal, width)
-	p2 = plt.bar(ind, our_times, width, bottom=optimal)
+	p1 = plt.bar(ind, optimals, width)
+	p2 = plt.bar(ind, our_best_diff, width, bottom=optimals)
+	p3 = plt.bar(ind, means, width, bottom=our_best, yerr=deviations)
 
 	plt.ylabel('Time')
-	plt.xticks(ind, list(INSTANCES_ALL))
+	plt.title('Results for %s' % str(weights) 
+		+ "\n On average our schedules take %s" % (round(sum(differences)/len(differences),2)) + "% more time."
+		+ "\n %s out of %s schedules where optimal!" % (optimal, len(result)))
+	plt.xticks(ind, list(result), rotation='vertical')
 	plt.yticks(np.arange(0, 5000, 500))
-	plt.legend((p1[0], p2[0]), ('Optimal', 'Our Results'))
+	plt.legend((p1[0], p2[0], p3[0]), ('Optimal', 'Our Best', 'Our Mean'))
 
-	plt.show()
+	plt.savefig(resfile.replace('.txt','.png'), dpi=500)
+
+def parameter_checker(instances=INSTANCES):
+	mode = 'Experimental' # For better comparison we work with fixed starting points
+	list_of_weights = [(10, 2, 0.25),(5,1,0.25),(10,2,0.125),(15,4,0.25),(10,2,0.5)]
+	for weights in list_of_weights:
+
+		result = dict()
+
+		for instance in instances:
+			print("#########################")
+			print('Now running instance: '+ instance)
+			print("#########################")
+
+			result[instance] = tabu_search(instance, mode, weights)
+		resfile = 'results/results'+str(weights)+'.txt'
+		storage = open(resfile, 'wb')			# for persistency, the results are stored 
+		pickle.dump(result, storage)				# to a txt file
+		storage.close()
+		performance(resfile,weights)
