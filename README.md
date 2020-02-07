@@ -15,7 +15,7 @@ Notice: Not every plan generated during a run of our tabu search can be turned i
 ## Our Tabu Search Implementation
 
 ### Neighbourhood
-Our tabu search algorithm constructs the neighbourhood of a plan by considering all plans obtained through swapping two ''adjacent'' operations on one machine. We decided on resticting swaps to neighbouring operations to keep the runtime from blowing up. To avoid getting stuck in a local optimum too easily, the algorithm is allowed to swap any two steps of the same machine when no improvement has been found in a number of iterations. This way we get a good tradeoff between runtime of the algorithm and runtime of the resulting best schedule.
+Our tabu search algorithm constructs the neighbourhood of a plan by considering all plans obtained through swapping two ''adjacent'' operations on one machine. We decided on resticting swaps to neighbouring operations to keep the runtime from blowing up. To avoid getting stuck in a local optimum too easily, the algorithm is allowed to swap any two operations of the same machine when no improvement has been found in a number of iterations. This way we get a good tradeoff between runtime of the algorithm and runtime of the resulting best schedule.
 
 ### Evaluation
 The evalutation of the neighbouring plans is done by creating the corresponding schedules and getting their respective runtimes. A runtime of -1 is returned for plans that contain deadlocks.
@@ -42,17 +42,18 @@ The tabu search terminates when no better swap has been found for a number of it
 
 ## Parameters of the algorithm
 
-While the algorithm has been able to perform reasonably well, there are still a number of values that we have not been able to find optimal values for. The general mechanisms of the algorithm work as outlined above, but concrete runs of the algorithm are usually influenced by the parameters described below. 
-It is possible to set concrete parameters as input values for the tabu search. Default values (for which we obtained good results among the different test instances) are hard-coded. All of these values depend on the concrete problem instance, and coefficients can be set to influence their values.
-* RECENCY_MEMORY : After a swap has been performed, the machine will be tabu for this many following swaps
-* FREQUENCY_MEMORY : A move will be remembered for the frequency-based penalty for this number of steps
-* FREQUENCY_INFLUENCE : This weight will be used to control the influence of the frequency-based penalty
+The general mechanisms of the algorithm work as outlined above, but concrete runs of the algorithm are influenced by the parameters described below.
 
-These values influence the algorithm, but we have decided to hardcode their values in the source code.
-* NO_IMPROVEMENT_MAX : This value sets the number of plans the algorithm will explore before terminating the run
-* NO_IMPROVEMENT_SWITCH : After this many steps without improvement will the algorithm allow arbitrary swaps 
-* TRIES : To improve the result, the algorithm performs more this number of iterations with different starting plans
-* MODE : In order to optimize parameter (and eliminate the influence of the starting plan), it is possible to fall back on precomputed starting plans. This is only utilized in mode 'Experimental' 
+The following parameters are dynamically set and depend on the size of the current instance. Coefficients can be passed to the tabu_search() method to further influence their values. If no coefficients are passed, default weights (for which we obtained good results among the different test instances) are used. 
+* RECENCY_MEMORY : After a swap has been performed, the machine will be tabu for this many following iterations.
+* FREQUENCY_MEMORY : A move will be remembered for the frequency-based penalty for this number of iterations.
+* FREQUENCY_INFLUENCE : This weight will be used to control the influence of the frequency-based penalty.
+
+The following parameters are static (i.e. not depending on the instance size in our implementation) and we have currently hardcoded their values in the source code.
+* NO_IMPROVEMENT_SWITCH = 6 : After this many iterations without improvement the algorithm will allow arbitrary swaps. 
+* NO_IMPROVEMENT_MAX = 12: After this many iterations without improvement the algorithm will terminate the run.
+* TRIES = 5: Number of different starting plans from which the algorithm will run when called once for one instance.
+* MODE = 'Active': The starting plans mentioned above should be chosen randomly. However, in order to evaluate the influence of different parameter values without running the algorithm often enough to get meaningful results for random starting plans, it is possible to fall back on pregenerated and fixed starting plans by using mode 'Experimental'. For truely random starting points use 'Active'.
 
 ## Running our Code
 
