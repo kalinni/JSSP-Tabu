@@ -154,11 +154,7 @@ def search_schedule(plan):
 	print("valid: %s, invalid: %s, aspiration %s, iterations %s" % (valid,invalid,aspiration, iteration))
 	return best_schedule
 
-<<<<<<< HEAD
-def set_dynamic_parameters(plan, weights=(0.5, 2, 0.3)):
-=======
 def set_dynamic_parameters(plan, weights=(10, 2, 0.25)):
->>>>>>> parent of e179a0c... Parameters as discussed
 	global RECENCY_MEMORY, FREQUENCY_MEMORY, FREQUENCY_INFLUENCE
 	jobs = plan['jobs']
 	steps = plan['steps']
@@ -172,11 +168,7 @@ def set_dynamic_parameters(plan, weights=(10, 2, 0.25)):
 	print("Weight of frequency of moves is %s" % FREQUENCY_INFLUENCE)
 	print("")
 
-<<<<<<< HEAD
-def tabu_search(instance, mode = MODE, weights=(0.5, 2, 0.3)):
-=======
 def tabu_search(instance, mode = MODE, weights=(10, 2, 0.25)):
->>>>>>> parent of e179a0c... Parameters as discussed
 	instance_path = 'instances/' + instance + '.txt'
 	if not path.exists(instance_path):
 		raise SystemExit("There is no instance at %s" % instance_path)
