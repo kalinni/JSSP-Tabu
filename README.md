@@ -8,11 +8,29 @@ A JSSP has several jobs consisting of several steps each. We call one such step 
 
 Given are _instances_ for the JSSP, where operations are sorted by their jobs. We parse those instances into _plans_. A plan has all operations sorted by machine and already gives the order in which they are executed.
 
-However, a plan does not contain start and end times for the operations. To get those, a plan is turned into a _schedule_.
+However, a plan does not contain start and end times for the operations. To get those, a plan is turned into a _schedule_. For all admissible schedules (i.e. not containing deadlocks) we obtain the optimal schedule with this ordering of steps.
 
-Not every plan generated during a run of our tabu search can be turned into a complete schedule - some contain deadlocks caused by dependencies between machines. Our code only checks for a reasonable order of operations located on the same machine before trying to schedule a plan.
+Our tabu search algorithm constructs the neighbourhood of a plan by considering all plans obtained through swapping two ''adjacent'' steps. Not every plan generated during a run of our tabu search can be turned into a complete schedule - some contain deadlocks caused by dependencies between machines. 
 
-[//]: # Include Tries, Iterations and the other parameters here or, better, in an extra section
+During the tabu search, instead of barring the swap, we add the machine on which the swap was performed to the tabu list. This forces the algorithm to explore different parts of the search space and has led to better results overall. The tabu search terminates when no better swap has been found for a number of search steps. To avoid getting stuck in a local optimum too easily, the algorithm is allowed to swap any two steps of the same machine when no improvement has been found in a number of steps. This usually improves the overall efficacy, although at the cost of an increased computation time.
+
+To improve the results further, we have implemented a simple aspiration criterion and frequency-based penalty.
+
+
+
+## Parameters of the algorithm
+
+While the algorithm has been able to perform reasonably well, there are still a number of values that we have not been able to find optimal values for. The general mechanisms of the algorithm work as outlined above, but concrete runs of the algorithm are usually influenced by the parameters described below. 
+It is possible to set concrete parameters as input values for the tabu search. Default values (for which we obtained good results among the different test instances) are hard-coded. All of these values depend on the concrete problem instance, and coefficients can be set to influence their values.
+* RECENCY_MEMORY : After a swap has been performed, the machine will be tabu for this many following swaps
+* FREQUENCY_MEMORY : A move will be remembered for the frequency-based penalty for this number of steps
+* FREQUENCY_INFLUENCE : This weight will be used to control the influence of the frequency-based penalty
+
+These values influence the algorithm, but we have decided to hardcode their values in the source code.
+* NO_IMPROVEMENT_MAX : This value sets the number of plans the algorithm will explore before terminating the run
+* NO_IMPROVEMENT_SWITCH : After this many steps without improvement will the algorithm allow arbitrary swaps 
+* TRIES : To improve the result, the algorithm performs more this number of iterations with different starting plans
+* MODE : In order to optimize parameter (and eliminate the influence of the starting plan), it is possible to fall back on precomputed starting plans. This is only utilized in mode 'Experimental' 
 
 ## Running our Code
 
@@ -47,15 +65,15 @@ Folders:
 Python files:
 - __searcher.py__
   - This is the main file, it contains the methods and structure for the search, for recency and frequency memories, a print\_schedule function and a main method. 
-- neighbourhood.py
+- __neighbourhood.py__
   - Contains the function that returns a neighbour for a given plan. The function takes two indices and is capable of doing long distant swaps on a machine and checking them for reasonability if asked to.
-- operation.py
+- __operation.py__
   - Contains only a class for operations. Each operation contains its job, machine, step (which step of the job it is) and duration.
-- jssp\_parser.py
+- __jssp\_parser.py__
   - Function to turn a given instance into a plan (and the script that separeted jobshop1.txt).
-- planner.py
+- __planner.py__
   - Functions to create either a random starting point for the tabu search (i.e. a random plan) from another plan or give pregenerated plans to enable us to compare runtime and result for a fixed set of starting points.
-- scheduler.py
+- __scheduler.py__
   - The method to turn a plan into a schedule. This resamples the evaluation function of our tabu search.
 - __evalutor.py__
   - Methods to evaluate how our search algorithm is performing on the given benchmark instances.
