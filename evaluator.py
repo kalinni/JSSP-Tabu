@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 
 from searcher import tabu_search
 
+# all instances with the optimal times given 
+# here: https://pdfs.semanticscholar.org/1d26/47ac792c6f199bfd4893692648c437c0bab2.pdf 
+# and here: https://books.google.de/books?id=xj00CwAAQBAJ&pg=PA565&lpg=PA565&dq=job+shop+scheduling+abz5-abz9+benchmarks&source=bl&ots=8j7oSEcsqq&sig=ACfU3U2DWype-Kv7ixGnl8TFpDp2zYZe4g&hl=de&sa=X&ved=2ahUKEwj8hvL61ILnAhUSy6QKHXSDD9wQ6AEwAHoECAkQAQ#v=onepage&q=job%20shop%20scheduling%20abz5-abz9%20benchmarks&f=false
+
 INSTANCES_ALL = {'abz5': 1234, 'abz6': 943, 'abz7': 656, 'abz8': 665, 'abz9': 679, 
 	'ft06': 55, 'ft10': 930, 'ft20': 1165, 
 	'la01': 666, 'la02': 655, 'la03': 597, 'la04': 590, 'la05': 593, 
@@ -105,15 +109,16 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 
 	# For calculating some stats
 	differences = []
+	differences_mean = []
 	optimal = 0
 	better = []
 
 	# Lists for the stacked bar chart
 	optimals = []
 	our_best = [] # needed to stack means on top of our best
-	our_best_diff = [] # difference to optimals
-	means_diff = [] # difference to our best
-	deviations = []
+	our_best_diff = [] # difference our best to optimals
+	means_diff = [] # difference our mean to our best
+	deviations = [] # standard deviations to the mean
 
 
 	for instance in result:
@@ -136,7 +141,9 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 
 		# calculate how much longer our schedules take and how many optimal times we found
 		percent = round((result[instance][0]/INSTANCES_ALL[instance] -1)*100,1)
+		percent_mean = round((mean/INSTANCES_ALL[instance]-1)*100,1)
 		differences.append(percent)
+		differences_mean.append(percent_mean)
 		if (result[instance][0] - INSTANCES_ALL[instance]) == 0 : 
 			optimal += 1
 		# Check, whether some results seem to be better then the optimal known so far
@@ -144,7 +151,8 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 			better.append(instance)
 		print("Instance %s ---- our best: %s ---- optimum: %s ---- difference in percent: %s " % (instance, result[instance][0], INSTANCES_ALL[instance], percent))
 	
-	print("On average our schedules take %s" % (round(sum(differences)/len(differences),2)) + "% more time.")
+	print("On average our best schedules take %s" % (round(sum(differences)/len(differences),2)) + "% more time.")
+	print("On average our schedules take %s" % (round(sum(differences_mean)/len(differences_mean),2)) + "% more time.")
 	print("%s out of %s schedules where optimal!" % (optimal, len(result)))
 	
 	if len(better) > 0:
@@ -156,7 +164,8 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 	N = len(result)
 	ind = np.arange(N)
 	width = 0.4
-	plt.figure(figsize=(20,10))
+	plt.rcParams.update({'font.size': 10})
+	plt.figure(figsize=(10,6.5))
 
 	p1 = plt.bar(ind, optimals, width)
 	p2 = plt.bar(ind, our_best_diff, width, bottom=optimals)
@@ -164,7 +173,8 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 
 	plt.ylabel('Time')
 	plt.title('Results for %s' % str(weights) 
-		+ "\n On average our schedules take %s" % (round(sum(differences)/len(differences),2)) + "% more time."
+		+ "\n On average our best schedules take %s" % (round(sum(differences)/len(differences),2)) + "% more time."
+		+ "\n On average our schedules take %s" % (round(sum(differences_mean)/len(differences_mean),2)) + "% more time."
 		+ "\n %s out of %s schedules where optimal!" % (optimal, len(result)))
 	plt.xticks(ind, list(result), rotation='vertical')
 	plt.yticks(np.arange(0, 5000, 500))
@@ -174,7 +184,7 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 
 def parameter_checker(instances=SOME_INSTANCES):
 	'''
-	This is a function we used to play around with the influence of our parameters. 
+	This is a function for playing around with the influence of our parameters. 
 	'''
 	mode = 'Experimental' # For better comparison we work with fixed starting points
 	list_of_weights = [(0.5, 2, 0.3),(1, 2, 0.3),(0.5, 4, 0.3),(0.5, 2, 0.6),(0.5, 2, 0.15)]
@@ -184,7 +194,7 @@ def parameter_checker(instances=SOME_INSTANCES):
 
 		for instance in instances:
 			print("#########################")
-			print('Now running instance: '+ instance)
+			print('Now running instance: '+ instance + ' for weights ' + str(weights))
 			print("#########################")
 
 			result[instance] = tabu_search(instance, mode, weights)

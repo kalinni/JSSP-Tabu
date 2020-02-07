@@ -42,6 +42,7 @@ def realize_plan (plan):
 			time = max(time, schedule[m][-1][2])
 	schedule['time']=time
 
-	#output: schedule -> List of 3-tuples (Step, starting time, finish time) for every machine
-	#		  time    ->   number of machine cycles needed for the plan
+	#output: dictionary with the following keys and values
+	# machinenumber 	-> List of 3-tuples (Step, starting time, finish time) for the respective machine
+	#		   time    	-> number of machine cycles needed for the plan
 	return schedule
