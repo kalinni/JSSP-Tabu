@@ -163,9 +163,9 @@ def performance(resfile='results/results.txt',weights='[no weights known]'):
 	# Generate the bar chart
 	N = len(result)
 	ind = np.arange(N)
-	width = 0.4
-	plt.rcParams.update({'font.size': 10})
-	plt.figure(figsize=(10,6.5))
+	width = 0.5
+	plt.rcParams.update({'font.size': 9})
+	plt.figure(figsize=(((0.1*len(result))+8),6.5))
 
 	p1 = plt.bar(ind, optimals, width)
 	p2 = plt.bar(ind, our_best_diff, width, bottom=optimals)
