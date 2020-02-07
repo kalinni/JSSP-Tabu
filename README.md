@@ -67,7 +67,7 @@ This will run a tabu search for the la26 instance. You can also leave the parame
 
 ## Checking our results
 
-__evaluator.py__ has a method called ```output\_serial\_results()``` which will simply print our best results for some of the benchmark instances to the command line. In addition there are several methods we used to test varous parameter configurations and a method performance() which calculates means and standard deviations of results, compares them to the known optimums for the benchmark instances and generates a chart containing those information. Those charts can also be found in the results folder.
+__evaluator.py__ has a method called ```output_serial_results()``` which will simply print our best results for some of the benchmark instances to the command line. In addition there are several methods we used to test varous parameter configurations and a method ```performance()``` which calculates means and standard deviations of results, compares them to the known optimums for the benchmark instances and generates a chart containing those information. Those charts can also be found in the results folder.
 
 ## Some Notes on the Content and Structure of the Repository
 
