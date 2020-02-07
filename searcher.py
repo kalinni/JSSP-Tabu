@@ -13,7 +13,7 @@ NO_IMPROVE_MAX = 12		# How many iterations without improvement before we stop?
 NO_IMPROVE_SWITCH = 6	# How many iterations without improvement before we switch to a more complex neighbourhood?
 TRIES = 5				# From how many different starting schedules do we run the tabu search?
 
-MODE = 'Experimental'	# MODE variable shows whether the program is supposed to measure performance 
+MODE = 'Active'	# MODE variable shows whether the program is supposed to measure performance 
 						# on a preset list of plans ('Experimental') or supposed to run for arbitrary plans ('Active')
 
 # This function prints the schedule to the command line
